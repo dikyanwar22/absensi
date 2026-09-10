@@ -89,7 +89,8 @@
                     <li class="px-3 py-2 text-center border-bottom">
                         <img src="{{ $topAvatar }}" class="rounded-circle mb-2" width="48" height="48" style="object-fit:cover;">
                         <div class="fw-semibold small">{{ auth()->user()->name ?? 'Karyawan' }}</div>
-                        <small class="text-muted" style="font-size:11px;">{{ auth()->user()->nik ?? '' }} • {{ auth()->user()->display_role ?? '' }}</small>
+                        <small class="text-muted d-block" style="font-size:11px; line-height:1.1;">{{ auth()->user()->nik ?? '' }}</small>
+                        <small class="text-muted d-block" style="font-size:11px; line-height:1.1;">{{ auth()->user()->display_role ?? '' }}</small>
                     </li>
                     <li><a class="dropdown-item small" href="{{ route('employee.profile') }}"><i class="bi bi-person me-2"></i> Lihat Profile</a></li>
                     <li><a class="dropdown-item small text-danger" href="#" onclick="confirmLogoutEmployee(event)"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>

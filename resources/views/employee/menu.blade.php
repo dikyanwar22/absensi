@@ -9,7 +9,8 @@
     <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Karyawan') }}&background=0d6efd&color=fff" class="rounded-circle" width="48" height="48">
     <div>
         <div class="fw-semibold">{{ auth()->user()->name ?? 'Karyawan' }}</div>
-        <small class="text-muted">{{ auth()->user()->nik ?? '-' }} • {{ auth()->user()->display_role ?? 'STAFF' }}</small>
+        <small class="text-muted">• {{ auth()->user()->nik ?? '-' }}</small><br>
+        <small class="text-muted">• {{ auth()->user()->display_role ?? 'STAFF' }}</small>
     </div>
     <a href="{{ route('employee.profile') }}" class="ms-auto btn btn-sm btn-outline-primary">Profile</a>
 </div>
