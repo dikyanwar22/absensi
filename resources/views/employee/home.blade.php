@@ -17,18 +17,18 @@
 @endif
 <!-- Shift Hari Ini -->
 <div class="card card-rounded p-3 mb-3">
-    <div class="d-flex justify-content-between">
-        <div>
+    <div class="d-flex justify-content-between align-items-start flex-nowrap gap-2">
+        <div class="flex-grow-1" style="min-width:0;">
             <small class="text-muted">Shift Hari Ini</small>
             <div class="fw-semibold">{{ $employee?->shift?->name ?? 'Pagi' }} {{ $employee?->shift ? $employee->shift->start_time.' - '.$employee->shift->end_time : '07:00 - 15:00' }}</div>
-            <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ $office?->name ?? 'Kantor Pusat' }} (Radius {{ $office?->radius_meter ?? 100 }}m)</small>
+            <small class="text-muted text-nowrap" style="white-space:nowrap;"><i class="bi bi-geo-alt"></i> {{ $office?->name ?? 'Kantor Pusat' }} (Radius {{ $office?->radius_meter ?? 100 }}m)</small>
         </div>
         @if(!$attendance)
-            <span class="badge bg-danger align-self-start">Belum Absen Masuk</span>
+            <span class="badge bg-danger align-self-start flex-shrink-0 text-nowrap">Belum Absen Masuk</span>
         @elseif($attendance->check_in && !$attendance->check_out)
-            <span class="badge bg-warning align-self-start">Sudah Masuk - Belum Pulang</span>
+            <span class="badge bg-warning align-self-start flex-shrink-0 text-nowrap">Sudah Masuk - Belum Pulang</span>
         @elseif($attendance->check_out)
-            <span class="badge bg-success align-self-start">Sudah Selesai</span>
+            <span class="badge bg-success align-self-start flex-shrink-0 text-nowrap">Sudah Selesai</span>
         @endif
     </div>
 </div>
@@ -84,7 +84,7 @@
         @else
             <button class="btn btn-success btn-absen w-100" disabled><i class="bi bi-check-circle"></i> Sudah Selesai Hari Ini</button>
         @endif
-        <small class="text-muted mt-2 d-block">Foto Selfie + GPS Wajib (Lat/Lng tertracking)</small>
+        <small class="text-muted mt-2 d-block">Foto Selfie + GPS Wajib</small>
     </div>
 
     {{-- Area Kamera & Preview --}}
