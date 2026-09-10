@@ -55,7 +55,10 @@ Route::middleware(['auth', 'account.active', 'menu.access'])->prefix('admin')->n
     Route::post('employees/{employee}/resign', [\App\Http\Controllers\Admin\EmployeeController::class,'resign'])->name('employees.resign');
     Route::post('employees/{employee}/restore', [\App\Http\Controllers\Admin\EmployeeController::class,'restore'])->name('employees.restore');
     Route::post('employees/{employee}/toggle-status', [\App\Http\Controllers\Admin\EmployeeController::class,'toggleStatus'])->name('employees.toggle-status');
+<<<<<<< HEAD
     Route::get('employees/{employee}/id-card', [\App\Http\Controllers\Admin\EmployeeController::class,'idCard'])->name('employees.id-card');
+=======
+>>>>>>> 03b750586559a20aacd64af62893c95988533e04
     Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class)->except(['show']);
 
     // Setting Menu (tabel baru menu_settings) — role dinamis dari jabatan (manager_finance) + CRUD menu + Akses Mobile

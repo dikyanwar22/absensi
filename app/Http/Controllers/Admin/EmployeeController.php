@@ -372,6 +372,7 @@ class EmployeeController extends Controller
         return back()->with('success','Karyawan '.$employee->user->name.' dikembalikan aktif - akun login diaktifkan kembali (status_account=1)');
     }
 
+<<<<<<< HEAD
     public function idCard(Employee $employee)
     {
         $employee->load(['user','department','position','shift','officeLocation']);
@@ -422,6 +423,9 @@ class EmployeeController extends Controller
     }
 
      /**
+=======
+    /**
+>>>>>>> 03b750586559a20aacd64af62893c95988533e04
      * Infer role dari jabatan/posisi + departemen terpilih: HRD dept atau nama mengandung HRD/Manager -> hrd, Supervisor -> supervisor, else staff
      */
     private function inferRoleFromPosition(Position $position, ?Department $deptOverride = null): string

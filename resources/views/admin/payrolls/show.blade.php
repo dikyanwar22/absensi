@@ -32,7 +32,11 @@
     <div class="card-body">
         <div class="table-responsive">
             <table id="datatable-payroll-details" class="table table-sm table-bordered table-striped datatable" style="width:100%">
+<<<<<<< HEAD
                 <thead><tr><th>NIK</th><th>Nama</th><th>Dept</th><th>Hadir</th><th>Telat</th><th>Alpha</th><th>Pokok</th><th>Tunjangan</th><th>Lembur+Bonus</th><th>Potongan (Dinamis)</th><th>Bersih</th><th>Slip</th><th>Edit</th></tr></thead>
+=======
+                <thead><tr><th>NIK</th><th>Nama</th><th>Dept</th><th>Hadir</th><th>Telat</th><th>Alpha</th><th>Pokok</th><th>Tunjangan</th><th>Lembur+Bonus</th><th>Potongan</th><th>Bersih</th><th>Slip</th><th>Edit</th></tr></thead>
+>>>>>>> 03b750586559a20aacd64af62893c95988533e04
                 <tbody>
                 @foreach($payroll->details as $d)
                 <tr>
