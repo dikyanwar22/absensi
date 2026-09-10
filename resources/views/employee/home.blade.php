@@ -2,11 +2,18 @@
 @section('title','Home')
 @section('content')
 <!-- Sapaan -->
+@php
+    $hour = \Carbon\Carbon::now('Asia/Jakarta')->hour;
+    if ($hour >= 4 && $hour < 11) $greeting = 'Selamat Pagi';
+    elseif ($hour >= 11 && $hour < 15) $greeting = 'Selamat Siang';
+    elseif ($hour >= 15 && $hour < 18) $greeting = 'Selamat Sore';
+    else $greeting = 'Selamat Malam';
+@endphp
 <div class="card card-rounded p-3 mb-3">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h6 class="mb-0">Selamat Pagi, {{ auth()->user()->name ?? 'Budi' }}!</h6>
-            <small class="text-muted">{{ now()->translatedFormat('l, d F Y') }}</small>
+            <h6 class="mb-0">{{ $greeting }}, <br>{{ auth()->user()->name ?? 'Employee' }}</h6>
+            <small class="text-muted">{{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('l, d F Y') }}</small>
         </div>
         <span class="badge bg-primary">{{ auth()->user()->display_role ?? 'STAFF' }}</span>
     </div>
