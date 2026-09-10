@@ -105,7 +105,6 @@
     </div>
 </div>
 
-<!-- Bottom Bar FIXED -->
 <div class="fixed-bottom bottom-bar d-flex justify-content-around align-items-center text-center" style="padding:4px 6px;">
     <a href="/employee/menu" class="text-decoration-none flex-fill d-flex justify-content-center align-items-center" style="height:100%;">
         <div class="nav-item-inner {{ request()->is('employee/menu*') ? 'nav-item-active' : 'text-muted' }}"><i class="bi bi-grid fs-5"></i><small style="font-size:10px; line-height:1;">Menu</small></div>
