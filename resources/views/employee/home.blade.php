@@ -34,7 +34,22 @@
 </div>
 
 <!-- Lokasi GPS -->
-<div class="card card-rounded p-3 mb-3">
+<style>
+/* Fix: badge Luar/Dalam Jangkauan tidak boleh melebar keluar card di HP */
+#location-status .badge {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    display: inline-block;
+    max-width: 100%;
+    line-height: 1.35;
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 11px;
+}
+#location-info { word-wrap: break-word; overflow-wrap: anywhere; }
+</style>
+<div class="card card-rounded p-3 mb-3" style="overflow:hidden; word-wrap:break-word;">
     <div class="d-flex justify-content-between align-items-center">
         <small class="text-muted">Lokasi Terdeteksi</small>
         <button type="button" id="btn-retry-gps" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px; display:none;" onclick="retryGps()"><i class="bi bi-arrow-clockwise"></i> Coba Lagi</button>
@@ -43,7 +58,7 @@
         <div class="text-muted"><span class="spinner-border spinner-border-sm me-1" style="width:14px;height:14px;"></span> Mencari lokasi... Aktifkan GPS & Allow Location</div>
     </div>
     <div id="location-status" class="mt-2">
-        <span class="badge bg-secondary">Menunggu GPS</span>
+        <span class="badge bg-secondary" style="white-space:normal; max-width:100%;">Menunggu GPS</span>
     </div>
     <small id="gps-help" class="text-muted mt-2 d-block" style="font-size:11px; display:none;">Tips: Aktifkan GPS, beri izin Lokasi (Allow), buka di Chrome, di area terbuka.</small>
 </div>
@@ -133,9 +148,10 @@ function fetchLocation(){
             const officeLat = {{ $office?->latitude ?? -6.2088 }}, officeLng = {{ $office?->longitude ?? 106.8456 }}, radius = {{ $office?->radius_meter ?? 100 }};
             const dist = haversineClient(loc.lat, loc.lng, officeLat, officeLng);
             const within = dist <= radius;
+            // Fix HP: badge wrap ke bawah, tidak melebar keluar card
             document.getElementById('location-status').innerHTML = within
-                ? `<span class="badge bg-success">Dalam Jangkauan (${Math.round(dist)}m / ${radius}m)</span>`
-                : `<span class="badge bg-danger">Luar Jangkauan (${Math.round(dist)}m / ${radius}m) - Pindah mendekati kantor</span>`;
+                ? `<span class="badge bg-success" style="white-space:normal; max-width:100%; display:inline-block; text-align:left;">Dalam Jangkauan <small>(${Math.round(dist)}m / ${radius}m)</small></span>`
+                : `<span class="badge bg-danger" style="white-space:normal; max-width:100%; display:inline-block; text-align:left;">Luar Jangkauan <small>(${Math.round(dist)}m / ${radius}m)</small><br><small>- Pindah mendekati kantor</small></span>`;
             const btn = document.getElementById('btn-absen');
             if(btn) btn.disabled = !within;
             if(loc.isMocked) {
