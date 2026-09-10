@@ -6,7 +6,17 @@
 
 {{-- Info ringkas user --}}
 <div class="card card-rounded p-3 mb-3 d-flex flex-row align-items-center gap-3">
-    <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Karyawan') }}&background=0d6efd&color=fff" class="rounded-circle" width="48" height="48">
+    @php
+        $photo = null;
+        try {
+            $emp = auth()->user()->employee ?? null;
+            if($emp && $emp->photo && file_exists(public_path('uploads/'.$emp->photo))){
+                $photo = asset('uploads/'.$emp->photo);
+            }
+        } catch(\Throwable $e){}
+        $avatar = $photo ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name).'&background=0d6efd&color=fff&size=48';
+    @endphp
+    <img src="{{ $avatar }}" class="rounded-circle" width="48" height="48">
     <div>
         <div class="fw-semibold">{{ auth()->user()->name ?? 'Karyawan' }}</div>
         <small class="text-muted">• {{ auth()->user()->nik ?? '-' }}</small><br>

@@ -29,7 +29,7 @@
     <img src="{{ $avatar }}" class="rounded-circle" width="48" height="48" style="object-fit:cover;">
     <div class="flex-grow-1">
         <div class="fw-semibold small">{{ auth()->user()->name }}</div>
-        <small class="text-muted">{{ auth()->user()->email }}<br>{{ auth()->user()->nik ?? '-' }} • {{ auth()->user()->display_role }}</small>
+        <small class="text-muted">{{ auth()->user()->email }}<br>{{ auth()->user()->nik ?? '-' }} <br>{{ auth()->user()->display_role }}</small>
     </div>
     <a href="{{ route('employee.profile') }}" class="btn btn-sm btn-outline-primary">Profile</a>
 </div>

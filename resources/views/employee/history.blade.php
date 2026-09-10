@@ -15,7 +15,7 @@
             <input type="date" name="end_date" value="{{ $end }}" class="form-control form-control-sm" required>
         </div>
         <div class="col-2 d-grid">
-            <button class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Filter</button>
+            <button class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
         </div>
         <div class="col-12 d-flex gap-2 mt-2 flex-wrap">
             <a href="{{ route('employee.history', ['start_date'=>\Carbon\Carbon::now()->startOfMonth()->toDateString(), 'end_date'=>\Carbon\Carbon::now()->endOfMonth()->toDateString()]) }}" class="btn btn-sm {{ request('start_date')==\Carbon\Carbon::now()->startOfMonth()->toDateString() && request('end_date')==\Carbon\Carbon::now()->endOfMonth()->toDateString() ? 'btn-primary' : 'btn-outline-primary' }}">Bulan Ini</a>
