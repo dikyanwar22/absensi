@@ -61,9 +61,9 @@
 @if($tab=='attendance')
 <div class="card">
     <div class="card-header"><h3 class="card-title">Rekap Absensi Bulanan ({{ $start }} s/d {{ $end }}) - {{ $attendanceRows->count() }} karyawan</h3></div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm table-bordered table-hover mb-0">
+            <table id="datatable-report-attendance" class="table table-sm table-bordered table-hover table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light"><tr><th>#</th><th>Karyawan</th><th>Dept/Jabatan</th><th class="text-center">Hadir</th><th class="text-center">Telat</th><th class="text-center">Alpha*</th><th class="text-center">Telat (m)</th><th class="text-center">Lembur (jam)</th></tr></thead>
                 <tbody>
                 @forelse($attendanceRows as $i=>$r)
@@ -91,9 +91,9 @@
 @if($tab=='payroll')
 <div class="card">
     <div class="card-header"><h3 class="card-title">Rekap Gaji ({{ $payrollRows->count() }} baris)</h3></div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm table-bordered table-hover mb-0">
+            <table id="datatable-report-payroll" class="table table-sm table-bordered table-hover table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light"><tr><th>#</th><th>Periode</th><th>Karyawan</th><th>Dept</th><th class="text-right">Pokok</th><th class="text-right">Tunjangan</th><th class="text-right">Lembur</th><th class="text-right">Gross</th><th class="text-right">Potongan</th><th class="text-right">Bersih</th><th>Status</th></tr></thead>
                 <tbody>
                 @forelse($payrollRows as $i=>$r)
@@ -123,9 +123,9 @@
 @if($tab=='leave')
 <div class="card">
     <div class="card-header"><h3 class="card-title">Rekap Cuti ({{ $leaveRows->count() }} karyawan)</h3></div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm table-bordered table-hover mb-0">
+            <table id="datatable-report-leave" class="table table-sm table-bordered table-hover table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light"><tr><th>#</th><th>Karyawan</th><th>Dept</th><th class="text-center">Terpakai</th><th class="text-center">Sisa</th><th class="text-center">Total Pengajuan</th><th class="text-center">Disetujui</th><th class="text-center">Pending</th><th class="text-center">Ditolak</th></tr></thead>
                 <tbody>
                 @forelse($leaveRows as $i=>$r)

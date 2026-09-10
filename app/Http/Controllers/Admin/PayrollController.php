@@ -17,7 +17,7 @@ class PayrollController extends Controller
 {
     public function index()
     {
-        $payrolls = Payroll::orderByDesc('period')->paginate(12);
+        $payrolls = Payroll::orderByDesc('period')->get();
         return view('admin.payrolls.index', compact('payrolls'));
     }
 

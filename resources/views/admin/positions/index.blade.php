@@ -8,7 +8,7 @@
 <div class="card">
     <div class="card-header">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <h3 class="card-title">Daftar Jabatan ({{ $positions->total() }})</h3>
+            <h3 class="card-title">Daftar Jabatan ({{ $positions->count() }})</h3>
             <div class="d-flex gap-2 ml-auto">
                 <form method="GET" class="form-inline">
                     <select name="department_id" class="form-control form-control-sm mr-1" onchange="this.form.submit()">
@@ -26,14 +26,14 @@
             </div>
         </div>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover table-bordered mb-0">
+            <table id="datatable-positions" class="table table-hover table-bordered table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light"><tr><th style="width:50px;">#</th><th>Jabatan</th><th>Departemen</th><th class="text-right">Gaji Pokok Default</th><th class="text-center">Karyawan</th><th style="width:160px;">Aksi</th></tr></thead>
                 <tbody>
                 @forelse($positions as $i=>$p)
                     <tr>
-                        <td>{{ $positions->firstItem()+$i }}</td>
+                        <td>{{ $i+1 }}</td>
                         <td><i class="fas fa-briefcase text-warning mr-1"></i> <strong>{{ $p->name }}</strong></td>
                         <td><span class="badge bg-primary">{{ $p->department->name ?? '-' }}</span></td>
                         <td class="text-right">Rp {{ number_format($p->basic_salary_default,0,',','.') }}</td>
@@ -53,9 +53,8 @@
             </table>
         </div>
     </div>
-    <div class="card-footer d-flex justify-content-between align-items-center">
-        <small class="text-muted">{{ $positions->firstItem()??0 }}-{{ $positions->lastItem()??0 }} dari {{ $positions->total() }}</small>
-        {{ $positions->links() }}
+    <div class="card-footer">
+        <small class="text-muted">Total {{ $positions->count() }} jabatan — DataTables pagination aktif</small>
     </div>
 </div>
 <div class="alert alert-info small"><i class="fas fa-info-circle"></i> Gaji Pokok Default akan jadi acuan saat generate payroll (bisa override per periode).</div>

@@ -12,21 +12,21 @@
         <div class="card-header"><h3 class="card-title">Akun Login</h3></div>
         <div class="card-body">
             <div class="form-group"><label>Nama <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" value="{{ old('name',$employee->user->name) }}" required></div>
-            <div class="form-group"><label>NIK</label><input type="text" name="nik" class="form-control" value="{{ old('nik',$employee->user->nik) }}"> </div>
+            <div class="form-group"><label>NIK (Nomor Induk Karyawan)</label><input type="text" name="nik" class="form-control" value="{{ old('nik',$employee->user->nik) }}" readonly> </div>
             <div class="form-group"><label>Email <span class="text-danger">*</span></label><input type="email" name="email" class="form-control" value="{{ old('email',$employee->user->email) }}" required></div>
             <div class="form-group"><label>Password (kosongkan jika tidak ganti)</label><input type="password" name="password" class="form-control" placeholder="******"></div>
-            <div class="form-group"><label>Role <span class="text-danger">*</span></label>
-                <select name="role" class="form-control" required>
-                    <option value="staff" {{ old('role',$employee->user->role)=='staff'?'selected':'' }}>Staff</option>
-                    <option value="supervisor" {{ old('role',$employee->user->role)=='supervisor'?'selected':'' }}>Supervisor</option>
-                    <option value="hrd" {{ old('role',$employee->user->role)=='hrd'?'selected':'' }}>HRD</option>
-                </select>
+            <div class="form-group" hidden><label>Role <span class="text-danger">*</span> <small class="text-muted">(dari jabatan)</small></label>
+                <input type="text" name="role" id="role" class="form-control" value="{{ old('role',$employee->user->role) }}" placeholder="otomatis: manager_finance" list="roleListEdit">
+                <datalist id="roleListEdit">
+                    @php $existingRoles = \App\Models\User::distinct()->pluck('role')->filter(); @endphp
+                    @foreach($existingRoles as $r)<option value="{{ $r }}">@endforeach
+                </datalist>
+                <small class="text-muted" style="font-size:11px;">Otomatis dari jabatan (slug manager_finance), bisa diubah manual.</small>
             </div>
-            <div class="form-group"><label>Kode Karyawan <span class="text-danger">*</span></label><input type="text" name="employee_code" class="form-control" value="{{ old('employee_code',$employee->employee_code) }}" required></div>
             <div class="form-group">
                 <label>Foto</label>
-                @if($employee->photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($employee->photo))
-                    <div class="mb-2"><img src="{{ asset('storage/'.$employee->photo) }}" width="80" height="80" class="rounded-circle" style="object-fit:cover;"></div>
+                @if($employee->photo && file_exists(public_path('uploads/'.$employee->photo)))
+                    <div class="mb-2"><img src="{{ asset('uploads/'.$employee->photo) }}" width="80" height="80" class="rounded-circle" style="object-fit:cover;"></div>
                 @endif
                 <input type="file" name="photo" class="form-control" accept="image/*">
             </div>
@@ -38,8 +38,8 @@
         <div class="card-header"><h3 class="card-title">Data Kepegawaian</h3></div>
         <div class="card-body">
             <div class="row">
-                <div class="col-6 form-group"><label>Departemen <span class="text-danger">*</span></label><select name="department_id" class="form-control" required>@foreach($departments as $d)<option value="{{ $d->id }}" {{ old('department_id',$employee->department_id)==$d->id?'selected':'' }}>{{ $d->name }}</option>@endforeach</select></div>
-                <div class="col-6 form-group"><label>Jabatan <span class="text-danger">*</span></label><select name="position_id" class="form-control" required>@foreach($positions as $p)<option value="{{ $p->id }}" {{ old('position_id',$employee->position_id)==$p->id?'selected':'' }}>{{ $p->name }} - {{ $p->department->name }}</option>@endforeach</select></div>
+                <div class="col-6 form-group"><label>Departemen <span class="text-danger">*</span></label><select name="department_id" id="department_id" class="form-control" required>@foreach($departments as $d)<option value="{{ $d->id }}" {{ old('department_id',$employee->department_id)==$d->id?'selected':'' }} data-name="{{ strtolower($d->name) }}">{{ $d->name }}</option>@endforeach</select></div>
+                <div class="col-6 form-group"><label>Jabatan <span class="text-danger">*</span></label><select name="position_id" id="position_id" class="form-control" required>@foreach($positions as $p)<option value="{{ $p->id }}" {{ old('position_id',$employee->position_id)==$p->id?'selected':'' }} data-dept="{{ strtolower($p->department->name) }}">{{ $p->name }} - {{ $p->department->name }}</option>@endforeach</select></div>
             </div>
             <div class="row">
                 <div class="col-6 form-group"><label>Shift</label><select name="shift_id" class="form-control"><option value="">-- Pilih --</option>@foreach($shifts as $s)<option value="{{ $s->id }}" {{ old('shift_id',$employee->shift_id)==$s->id?'selected':'' }}>{{ $s->name }}</option>@endforeach</select></div>
@@ -79,4 +79,28 @@
 </div>
 </div>
 </form>
+@push('js')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const posSelect = document.getElementById('position_id');
+    const roleSelect = document.getElementById('role');
+    if(!posSelect || !roleSelect) return;
+    function slugify(str){
+        return str.toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    }
+    function inferRoleFromSelected(){
+        const opt = posSelect.options[posSelect.selectedIndex];
+        if(!opt) return;
+        const name = opt.getAttribute('data-name') || (opt.textContent.split(' - ')[0] || '');
+        const slug = slugify(name);
+        if(slug){
+            roleSelect.value = slug;
+            roleSelect.classList.add('border-warning');
+            setTimeout(()=> roleSelect.classList.remove('border-warning'), 1200);
+        }
+    }
+    posSelect.addEventListener('change', inferRoleFromSelected);
+});
+</script>
+@endpush
 @endsection

@@ -9,7 +9,7 @@
     <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Karyawan') }}&background=0d6efd&color=fff" class="rounded-circle" width="48" height="48">
     <div>
         <div class="fw-semibold">{{ auth()->user()->name ?? 'Karyawan' }}</div>
-        <small class="text-muted">{{ auth()->user()->nik ?? '-' }} • {{ auth()->user()->role ?? 'staff' }}</small>
+        <small class="text-muted">{{ auth()->user()->nik ?? '-' }} • {{ auth()->user()->display_role ?? 'STAFF' }}</small>
     </div>
     <a href="{{ route('employee.profile') }}" class="ms-auto btn btn-sm btn-outline-primary">Profile</a>
 </div>
@@ -88,5 +88,12 @@
     </div>
 </div>
 
+@if(auth()->check() && in_array(auth()->user()->role, ['hrd','supervisor']))
+<div class="card card-rounded p-3 mb-3" style="border:1px solid #0d6efd;">
+    <h6 class="mb-2 small fw-semibold text-primary"><i class="bi bi-speedometer2 me-1"></i>Dashboard Admin</h6>
+    <p class="small text-muted mb-2">Anda login sebagai <strong>{{ auth()->user()->display_role }}</strong>. Kembali ke panel admin untuk kelola karyawan & approve cuti.</p>
+    <a href="/admin/dashboard" class="btn btn-primary btn-sm w-100"><i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard Admin</a>
+</div>
+@endif
 <div class="text-center small text-muted">AbsensiKu v1.0 • Mobile PWA</div>
 @endsection

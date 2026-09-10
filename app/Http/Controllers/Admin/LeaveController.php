@@ -15,7 +15,7 @@ class LeaveController extends Controller
 
         $user = auth()->user();
         if ($user->role === 'supervisor') {
-            // Supervisor melihat yang diajukan ke dirinya (supervisor_id) + fallback dept scope untuk data lama
+            // Supervisor melihat yang diajukan ke dirinya (supervisor_id = dirinya) + fallback dept scope untuk data lama (supervisor_id NULL)
             $deptId = $user->employee?->department_id;
             $query->where(function($q) use ($user, $deptId){
                 $q->where('supervisor_id', $user->id);
@@ -25,10 +25,26 @@ class LeaveController extends Controller
                     });
                 }
             });
-            $query->where('status_supervisor', 'pending');
+            // Hanya yang masih pending di level supervisor, dan bukan pengajuan dirinya sendiri
+            $query->where('status_supervisor', 'pending')->where('user_id','!=',$user->id);
+        } elseif ($user->role === 'hrd') {
+            // HRD melihat semua, tapi bisa filter via ?filter=pending_hrd / pending_spv / approved / rejected
+            if ($filter = $request->query('filter')) {
+                if ($filter === 'pending_hrd') {
+                    $query->where('status_supervisor','approved')->where('status_hrd','pending');
+                } elseif ($filter === 'pending_spv') {
+                    $query->where('status_supervisor','pending');
+                } elseif ($filter === 'approved') {
+                    $query->where('final_status','approved');
+                } elseif ($filter === 'rejected') {
+                    $query->where('final_status','rejected');
+                }
+            }
+            // Default: pending HRD di atas (order pending HRD first)
+            $query->orderByRaw("CASE WHEN status_supervisor='approved' AND status_hrd='pending' THEN 0 ELSE 1 END");
         }
 
-        $leaves = $query->paginate(15);
+        $leaves = $query->get();
         return view('admin.leaves.index', compact('leaves'));
     }
 
@@ -39,6 +55,21 @@ class LeaveController extends Controller
         
         if ($leave->status_supervisor !== 'pending') {
             return back()->withErrors(['msg' => 'Sudah diproses supervisor']);
+        }
+        // Otorisasi: hanya supervisor yang ditunjuk atau 1 departemen yang sama yang boleh approve
+        $user = auth()->user();
+        if ($leave->supervisor_id && $leave->supervisor_id !== $user->id) {
+            return back()->withErrors(['msg' => 'Anda bukan atasan yang ditunjuk untuk pengajuan ini (ditujukan ke '.($leave->supervisor->name ?? 'atasan lain').')']);
+        }
+        if (is_null($leave->supervisor_id)) {
+            $deptId = $user->employee?->department_id;
+            $leaveDept = $leave->user->employee?->department_id;
+            if ($deptId && $leaveDept && $deptId !== $leaveDept) {
+                return back()->withErrors(['msg' => 'Hanya atasan 1 departemen yang sama boleh approve (beda departemen)']);
+            }
+        }
+        if ($leave->user_id === $user->id) {
+            return back()->withErrors(['msg' => 'Tidak boleh approve pengajuan diri sendiri']);
         }
 
         $leave->update([
@@ -59,6 +90,9 @@ class LeaveController extends Controller
     // HRD Final Approve Level 2
     public function approveHrd(Request $request, Leave $leave)
     {
+        if (auth()->user()->role !== 'hrd') {
+            return back()->withErrors(['msg' => 'Hanya HRD yang bisa final approve']);
+        }
         $request->validate(['action' => 'required|in:approved,rejected', 'note' => 'nullable|string']);
 
         if ($leave->status_supervisor !== 'approved') {
@@ -66,6 +100,27 @@ class LeaveController extends Controller
         }
         if ($leave->status_hrd !== 'pending') {
             return back()->withErrors(['msg' => 'Sudah diproses HRD']);
+        }
+
+        // Cek kuota Cuti Tahunan saat final approve HRD (otomatis berkurang setelah approve)
+        if ($request->action === 'approved') {
+            $leave->loadMissing(['leaveType']);
+            if ($leave->leaveType && $leave->leaveType->name === 'Cuti Tahunan' && $leave->leaveType->quota_days > 0) {
+                $year = \Carbon\Carbon::parse($leave->start_date)->year;
+                $used = \App\Models\Leave::where('user_id', $leave->user_id)
+                    ->where('leave_type_id', $leave->leave_type_id)
+                    ->where('final_status', 'approved')
+                    ->whereYear('start_date', $year)
+                    ->sum('total_days');
+                $remaining = $leave->leaveType->quota_days - $used;
+                // $used belum termasuk $leave ini (karena masih pending)
+                if ($remaining <= 0) {
+                    return back()->withErrors(['msg' => "Jatah cuti tahun $year sudah habis ($used/{$leave->leaveType->quota_days}). Tidak bisa approve."]);
+                }
+                if ($used + $leave->total_days > $leave->leaveType->quota_days) {
+                    return back()->withErrors(['msg' => "Gagal approve: jatah cuti {$leave->user->name} tahun $year sisa $remaining hari, pengajuan {$leave->total_days} hari melebihi kuota {$leave->leaveType->quota_days}."]);
+                }
+            }
         }
 
         $leave->update([

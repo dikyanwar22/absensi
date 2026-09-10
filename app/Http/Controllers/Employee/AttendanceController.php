@@ -8,7 +8,6 @@ use App\Models\OfficeLocation;
 use App\Models\Employee;
 use App\Helpers\GeoHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,10 +27,30 @@ class AttendanceController extends Controller
     public function history(Request $request)
     {
         $user = auth()->user();
+
+        // Default 01 - 31 bulan ini (tidak berat jika sudah banyak data)
+        $start = $request->query('start_date') ?: Carbon::now()->startOfMonth()->toDateString();
+        $end = $request->query('end_date') ?: Carbon::now()->endOfMonth()->toDateString();
+
+        // Validasi format & range
+        try {
+            $startCarbon = Carbon::parse($start);
+            $endCarbon = Carbon::parse($end);
+            if ($startCarbon->gt($endCarbon)) {
+                [$start, $end] = [$end, $start];
+            }
+        } catch (\Throwable $e) {
+            $start = Carbon::now()->startOfMonth()->toDateString();
+            $end = Carbon::now()->endOfMonth()->toDateString();
+        }
+
         $attendances = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$start, $end])
             ->orderByDesc('date')
-            ->paginate(20);
-        return view('employee.history', compact('attendances'));
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('employee.history', compact('attendances','start','end'));
     }
 
     /**
@@ -97,7 +116,7 @@ class AttendanceController extends Controller
             }
         }
 
-        // Simpan foto selfie (base64)
+        // Simpan foto selfie (base64) ke public/uploads/attendances
         $photoPath = null;
         if ($request->photo_base64) {
             $base64 = $request->photo_base64;
@@ -108,14 +127,20 @@ class AttendanceController extends Controller
             $imageData = base64_decode($base64);
             if ($imageData) {
                 $filename = 'attendances/' . $user->id . '_' . $today . '_in.jpg';
-                Storage::disk('public')->put($filename, $imageData);
+                $fullPath = public_path('uploads/' . $filename);
+                $dir = dirname($fullPath);
+                if (!file_exists($dir)) mkdir($dir, 0755, true);
+                file_put_contents($fullPath, $imageData);
                 $photoPath = $filename;
             }
         }
 
-        $attendance = Attendance::updateOrCreate(
-            ['user_id' => $user->id, 'date' => $today],
-            [
+        // INSERT murni — tidak UPDATE. Jika tidak ada data, insert 1 row/hari. Untuk 1000 user = 1000 insert/hari, sangat ringan (indexed by UNIQUE user_id+date)
+        // Jika race condition (2 request bersamaan), UNIQUE akan throw exception, tangkap sebagai "sudah absen"
+        try {
+            $attendance = Attendance::create([
+                'user_id' => $user->id,
+                'date' => $today,
                 'shift_id' => $shift?->id,
                 'check_in' => Carbon::now(),
                 'lat_in' => $request->lat,
@@ -128,8 +153,14 @@ class AttendanceController extends Controller
                 'is_fake_gps' => $request->boolean('is_mocked'),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-            ]
-        );
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Jika sudah ter-insert oleh request lain bersamaan (UNIQUE violation code 23000)
+            if (str_contains($e->getMessage(), 'UNIQUE') || $e->getCode() === '23000') {
+                return response()->json(['message' => 'Anda sudah absen masuk hari ini (duplikat terdeteksi)'], 422);
+            }
+            throw $e;
+        }
 
         return response()->json([
             'message' => $status === 'terlambat' ? "Absen masuk berhasil! Terlambat {$lateMinutes} menit" : 'Absen masuk berhasil! Hadir tepat waktu',
@@ -170,7 +201,7 @@ class AttendanceController extends Controller
             return response()->json(['message' => "Di luar jangkauan kantor untuk absen pulang! Jarak " . round($distance) . "m"], 422);
         }
 
-        // Foto pulang
+        // Foto pulang ke public/uploads/attendances
         $photoPath = null;
         if ($request->photo_base64) {
             $base64 = $request->photo_base64;
@@ -178,7 +209,10 @@ class AttendanceController extends Controller
             $imageData = base64_decode($base64);
             if ($imageData) {
                 $filename = 'attendances/' . $user->id . '_' . $today . '_out.jpg';
-                Storage::disk('public')->put($filename, $imageData);
+                $fullPath = public_path('uploads/' . $filename);
+                $dir = dirname($fullPath);
+                if (!file_exists($dir)) mkdir($dir, 0755, true);
+                file_put_contents($fullPath, $imageData);
                 $photoPath = $filename;
             }
         }

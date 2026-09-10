@@ -20,14 +20,24 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     $user = auth()->user();
-    if ($user && $user->role === 'staff') return redirect('/employee/home');
+    if (!$user) return redirect('/login');
+    $role = strtolower($user->role ?? '');
+    // Jika role di-setting Akses Mobile (menu_settings akses_mobile = true) → langsung mobile
+    try {
+        if (\App\Models\MenuSetting::canAccess($role, 'akses_mobile')) {
+            return redirect('/employee/home');
+        }
+    } catch (\Throwable $e) {}
+    // fallback: jika mengandung staff → employee, else admin (hrd/manager/supervisor)
+    if (str_contains($role, 'staff')) return redirect('/employee/home');
     return redirect('/admin/dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Admin (HRD & Supervisor) - AdminLTE 3
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'account.active', 'menu.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/attendances', [\App\Http\Controllers\Admin\AttendanceController::class, 'index'])->name('attendances.index');
+    Route::get('/attendances/export', [\App\Http\Controllers\Admin\AttendanceController::class, 'export'])->name('attendances.export');
     Route::get('/attendances/live-map', [\App\Http\Controllers\Admin\AttendanceController::class, 'liveMap'])->name('attendances.live-map');
     Route::get('/attendances/live-map-data', [\App\Http\Controllers\Admin\AttendanceController::class, 'liveMapData'])->name('attendances.live-map-data');
     Route::get('/attendances/{attendance}/edit', [\App\Http\Controllers\Admin\AttendanceController::class, 'edit'])->name('attendances.edit');
@@ -41,8 +51,20 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Karyawan
     Route::get('employees/resigned', [\App\Http\Controllers\Admin\EmployeeController::class,'resigned'])->name('employees.resigned');
+    Route::get('employees/pending', [\App\Http\Controllers\Admin\EmployeeController::class,'pending'])->name('employees.pending');
     Route::post('employees/{employee}/resign', [\App\Http\Controllers\Admin\EmployeeController::class,'resign'])->name('employees.resign');
+    Route::post('employees/{employee}/restore', [\App\Http\Controllers\Admin\EmployeeController::class,'restore'])->name('employees.restore');
+    Route::post('employees/{employee}/toggle-status', [\App\Http\Controllers\Admin\EmployeeController::class,'toggleStatus'])->name('employees.toggle-status');
     Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class)->except(['show']);
+
+    // Setting Menu (tabel baru menu_settings) — role dinamis dari jabatan (manager_finance) + CRUD menu + Akses Mobile
+    Route::get('menu-settings', [\App\Http\Controllers\Admin\MenuSettingController::class,'index'])->name('menu-settings.index');
+    Route::post('menu-settings', [\App\Http\Controllers\Admin\MenuSettingController::class,'update'])->name('menu-settings.update');
+    Route::post('menu-settings/mobile', [\App\Http\Controllers\Admin\MenuSettingController::class,'updateMobile'])->name('menu-settings.mobile');
+    Route::get('menu-settings/reset', [\App\Http\Controllers\Admin\MenuSettingController::class,'reset'])->name('menu-settings.reset');
+    Route::post('menu-settings/menus', [\App\Http\Controllers\Admin\MenuSettingController::class,'storeMenu'])->name('menu-settings.menus.store');
+    Route::put('menu-settings/menus/{menu}', [\App\Http\Controllers\Admin\MenuSettingController::class,'updateMenu'])->name('menu-settings.menus.update');
+    Route::delete('menu-settings/menus/{menu}', [\App\Http\Controllers\Admin\MenuSettingController::class,'destroyMenu'])->name('menu-settings.menus.destroy');
 
     // Cuti 2 Level
     Route::get('/leaves', [\App\Http\Controllers\Admin\LeaveController::class, 'index'])->name('leaves.index');
@@ -73,7 +95,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 // Employee Mobile - Bootstrap 5 Bottom Bar
-Route::middleware(['auth'])->prefix('employee')->name('employee.')->group(function () {
+Route::middleware(['auth', 'account.active'])->prefix('employee')->name('employee.')->group(function () {
     Route::get('/menu', function(){ return view('employee.menu'); })->name('menu');
     Route::get('/notifications', [\App\Http\Controllers\Employee\NotificationController::class, 'index'])->name('notifications');
     Route::get('/home', [\App\Http\Controllers\Employee\AttendanceController::class, 'home'])->name('home');

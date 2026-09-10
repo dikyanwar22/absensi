@@ -55,12 +55,12 @@
 @endforelse
 <div class="mt-3">{{ $payrolls->links() }}</div>
 
-<div class="card card-rounded p-3 mt-3 bg-light border-0">
+<!-- <div class="card card-rounded p-3 mt-3 bg-light border-0">
     <h6 class="small fw-semibold mb-2"><i class="bi bi-lightbulb me-1"></i>Cara coba menu ini</h6>
     <ol class="small text-muted mb-0" style="font-size:11.5px; padding-left:18px;">
         <li>Login HRD → <code>/admin/payrolls</code> → <strong>Buat Periode Baru</strong> (isi YYYY-MM & cut-off)</li>
         <li>Klik <strong>Generate Payroll</strong> → lalu <strong>Kunci Periode</strong> (Locked)</li>
         <li>Kembali login Karyawan → <code>/employee/payslip</code> → history bulan muncul, filter by periode bisa dipakai, PDF bisa didownload</li>
     </ol>
-</div>
+</div> -->
 @endsection

@@ -7,8 +7,8 @@
 
 @php
     $photoUrl = null;
-    if (!empty($employee?->photo) && \Illuminate\Support\Facades\Storage::disk('public')->exists($employee->photo)) {
-        $photoUrl = asset('storage/'.$employee->photo);
+    if (!empty($employee?->photo) && file_exists(public_path('uploads/'.$employee->photo))) {
+        $photoUrl = asset('uploads/'.$employee->photo);
     } else {
         $photoUrl = 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=0d6efd&color=fff&size=120';
     }
@@ -23,7 +23,7 @@
                     <label for="photoInput" class="position-absolute bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;bottom:5px;right:5px;cursor:pointer;border:2px solid #fff;"><i class="fas fa-camera fa-sm"></i></label>
                 </div>
                 <h3 class="profile-username mt-2">{{ $user->name }}</h3>
-                <p class="text-muted">{{ $user->nik ?? '-' }} • {{ $employee->employee_code ?? '-' }}<br>{{ $user->email }}<br><span class="badge bg-primary">{{ $user->role }}</span> @if($employee)<span class="badge bg-secondary">{{ ucfirst($employee->employment_status ?? '-') }}</span>@endif</p>
+                <p class="text-muted">NIK: {{ $user->nik ?? '-' }}<br>{{ $user->email }}<br><span class="badge bg-primary">{{ $user->role }}</span> @if($employee)<span class="badge bg-secondary">{{ ucfirst($employee->employment_status ?? '-') }}</span>@endif</p>
                 <form id="avatarForm" action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf @method('PUT')
                     <input type="file" name="photo" id="photoInput" accept="image/*" class="d-none" onchange="previewAvatar(this); document.getElementById('btnUploadAvatar').classList.remove('d-none');">

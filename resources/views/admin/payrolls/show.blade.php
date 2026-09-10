@@ -29,9 +29,9 @@
     @else
     <div class="alert alert-warning small mb-0"><i class="fas fa-unlock"></i> Periode <strong>Locked</strong> — klik <strong>Unlock ke Draft</strong> untuk edit lagi, lalu <strong>Kunci</strong> kembali. Slip tetap bisa dilihat karyawan saat Locked.</div>
     @endif
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped">
+            <table id="datatable-payroll-details" class="table table-sm table-bordered table-striped datatable" style="width:100%">
                 <thead><tr><th>NIK</th><th>Nama</th><th>Dept</th><th>Hadir</th><th>Telat</th><th>Alpha</th><th>Pokok</th><th>Tunjangan</th><th>Lembur+Bonus</th><th>Potongan</th><th>Bersih</th><th>Slip</th><th>Edit</th></tr></thead>
                 <tbody>
                 @foreach($payroll->details as $d)

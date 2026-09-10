@@ -8,6 +8,30 @@
 
 @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 
+{{-- Filter Tanggal 01-31 bulan ini (default) --}}
+<div class="card card-rounded p-3 mb-3">
+    <form method="GET" action="{{ route('employee.leaves.index') }}" class="row g-2 align-items-end">
+        <div class="col-5">
+            <label class="form-label small mb-1">Dari</label>
+            <input type="date" name="start_date" value="{{ $start }}" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-5">
+            <label class="form-label small mb-1">Sampai</label>
+            <input type="date" name="end_date" value="{{ $end }}" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-2 d-grid">
+            <button class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Filter</button>
+        </div>
+        <div class="col-12 d-flex gap-2 mt-2 flex-wrap">
+            <a href="{{ route('employee.leaves.index', ['start_date'=>\Carbon\Carbon::now()->startOfMonth()->toDateString(), 'end_date'=>\Carbon\Carbon::now()->endOfMonth()->toDateString()]) }}" class="btn btn-sm {{ $start==\Carbon\Carbon::now()->startOfMonth()->toDateString() && $end==\Carbon\Carbon::now()->endOfMonth()->toDateString() ? 'btn-primary' : 'btn-outline-primary' }}">Bulan Ini</a>
+            <a href="{{ route('employee.leaves.index', ['start_date'=>\Carbon\Carbon::now()->startOfWeek()->toDateString(), 'end_date'=>\Carbon\Carbon::now()->endOfWeek()->toDateString()]) }}" class="btn btn-sm btn-outline-secondary">Minggu Ini</a>
+            <a href="{{ route('employee.leaves.index', ['start_date'=>\Carbon\Carbon::now()->subMonths(3)->startOfMonth()->toDateString(), 'end_date'=>\Carbon\Carbon::now()->endOfMonth()->toDateString()]) }}" class="btn btn-sm btn-outline-secondary">3 Bulan</a>
+            <a href="{{ route('employee.leaves.index') }}" class="btn btn-sm btn-outline-dark ms-auto">Reset</a>
+        </div>
+    </form>
+    <small class="text-muted d-block mt-2">Menampilkan {{ \Carbon\Carbon::parse($start)->translatedFormat('d M Y') }} s/d {{ \Carbon\Carbon::parse($end)->translatedFormat('d M Y') }} — {{ $leaves->total() }} data</small>
+</div>
+
 @forelse($leaves as $l)
 <div class="card card-rounded p-3 mb-2">
     <div class="d-flex justify-content-between">
@@ -16,8 +40,8 @@
             <small class="text-muted">{{ $l->start_date }} s/d {{ $l->end_date }}</small>
             <div class="small">{{ $l->reason }}</div>
             <div class="small text-muted mt-1">
-                <i class="bi bi-person-badge"></i> Atasan: {{ $l->supervisor->name ?? '-' }}|{{ $l->supervisor ? ucfirst($l->supervisor->role) : '-' }}|{{ $l->supervisor->nik ?? '-' }}
-                @if($l->backupUser) <br><i class="bi bi-people"></i> Backup: {{ $l->backupUser->name }}|{{ ucfirst($l->backupUser->role) }}|{{ $l->backupUser->nik ?? '-' }} @endif
+                <i class="bi bi-person-badge"></i> Atasan: {{ $l->supervisor->name ?? '-' }}|{{ $l->supervisor ? $l->supervisor->display_role : '-' }}|{{ $l->supervisor->nik ?? '-' }}
+                @if($l->backupUser) <br><i class="bi bi-people"></i> Backup: {{ $l->backupUser->name }}|{{ $l->backupUser->display_role }}|{{ $l->backupUser->nik ?? '-' }} @endif
             </div>
         </div>
         <div class="text-end ms-2">

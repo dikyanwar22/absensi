@@ -9,7 +9,7 @@ class Employee extends Model
 {
     protected $fillable = [
         'user_id','department_id','position_id','shift_id','office_location_id',
-        'employee_code','phone','address','join_date','employment_status',
+        'phone','address','join_date','employment_status',
         'contract_end_date','resign_date','bank_name','bank_account','bpjs_kes','bpjs_tk','is_active','photo'
     ];
 

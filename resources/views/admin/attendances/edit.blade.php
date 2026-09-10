@@ -93,7 +93,7 @@
                 <div class="col-md-3 form-group">
                     <label>Foto In</label>
                     @if($attendance->photo_in)
-                        <div><a href="{{ asset('storage/'.$attendance->photo_in) }}" target="_blank"><img src="{{ asset('storage/'.$attendance->photo_in) }}" width="60" class="rounded"></a> <small class="text-muted d-block">{{ $attendance->photo_in }}</small></div>
+                        <div><a href="{{ asset('uploads/'.$attendance->photo_in) }}" target="_blank"><img src="{{ asset('uploads/'.$attendance->photo_in) }}" width="60" class="rounded"></a> <small class="text-muted d-block">{{ $attendance->photo_in }}</small></div>
                     @else
                         <small class="text-muted">Tidak ada</small>
                     @endif
@@ -115,7 +115,7 @@
                 <div class="col-md-3 form-group">
                     <label>Foto Out</label>
                     @if($attendance->photo_out)
-                        <div><a href="{{ asset('storage/'.$attendance->photo_out) }}" target="_blank"><img src="{{ asset('storage/'.$attendance->photo_out) }}" width="60" class="rounded"></a></div>
+                        <div><a href="{{ asset('uploads/'.$attendance->photo_out) }}" target="_blank"><img src="{{ asset('uploads/'.$attendance->photo_out) }}" width="60" class="rounded"></a></div>
                     @else
                         <small class="text-muted">Tidak ada</small>
                     @endif

@@ -42,7 +42,7 @@ class ProfileController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         // Staff tidak berhak menghapus akun - hanya HRD boleh via admin/employees
-        if ($request->user()->role === 'staff') {
+        if (str_contains(strtolower($request->user()->role ?? ''), 'staff')) {
             return Redirect::route('profile.edit')->withErrors(['userDeletion' => 'Staff tidak berhak menghapus akun. Hubungi HRD.'], 'userDeletion');
         }
 
