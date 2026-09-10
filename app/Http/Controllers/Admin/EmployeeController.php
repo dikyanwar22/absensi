@@ -395,10 +395,10 @@ class EmployeeController extends Controller
             }
         }
 
-        // QR Code: NIK + Nama + Dept untuk verifikasi (simple-qrcode, SVG fallback karena PNG butuh imagick)
+        // QR Code: hanya NIK saja (sesuai request, jangan kebanyakan)
         $qrBase64 = null;
         try {
-            $qrData = "NIK:{$employee->user->nik} | {$employee->user->name} | {$employee->department->name} | {$company->name}";
+            $qrData = (string) ($employee->user->nik ?? $employee->id);
             // coba PNG dulu (butuh imagick), jika gagal fallback ke SVG (GD-free, Bacon SVG)
             try {
                 $qrPng = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(200)->margin(1)->errorCorrection('H')->generate($qrData);
@@ -413,8 +413,8 @@ class EmployeeController extends Controller
         }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.employees.id-card', compact('employee','company','photoBase64','qrBase64'));
-        // CR80 ID Card 85.6mm x 54mm portrait (54 x 86mm) - DomPDF points: 1mm = 2.83465
-        $pdf->setPaper([0, 0, 153.07, 242.65], 'portrait'); // 54mm x 85.6mm
+        // CR80 ID Card 85.6mm x 54mm landscape - DomPDF points: 1mm = 2.83465
+        $pdf->setPaper([0, 0, 242.65, 153.07], 'landscape'); // 85.6mm x 54mm
         $pdf->setOption('isRemoteEnabled', true);
         $pdf->setOption('isHtml5ParserEnabled', true);
         // stream inline supaya bisa print langsung, user bisa Save as PDF juga
