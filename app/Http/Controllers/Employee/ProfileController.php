@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class ProfileController extends Controller
@@ -68,7 +68,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => ['required','string','max:255'],
-            'email' => ['required','string','email','max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required','string','email','max:255'],
             'phone' => ['nullable','string','max:20'],
             'address' => ['nullable','string','max:500'],
             'bank_name' => ['nullable','string','max:50'],
@@ -88,7 +88,6 @@ class ProfileController extends Controller
         if (!$employee) {
             $employee = new \App\Models\Employee();
             $employee->user_id = $user->id;
-            $employee->employee_code = 'EMP' . str_pad($user->id, 4, '0', STR_PAD_LEFT);
             $employee->join_date = now()->toDateString();
         }
 
@@ -98,12 +97,20 @@ class ProfileController extends Controller
         $employee->bank_account = $request->bank_account;
 
         if ($request->hasFile('photo')) {
-            // hapus lama
-            if ($employee->photo && Storage::disk('public')->exists($employee->photo)) {
-                Storage::disk('public')->delete($employee->photo);
+            // hapus lama di public/uploads
+            if ($employee->photo) {
+                $oldPath = public_path('uploads/' . $employee->photo);
+                if (file_exists($oldPath)) unlink($oldPath);
+                // fallback jika tersimpan dengan prefix uploads/
+                $altOld = public_path($employee->photo);
+                if (file_exists($altOld) && str_starts_with($employee->photo, 'uploads/')) unlink($altOld);
             }
-            $path = $request->file('photo')->store('photos/employees', 'public');
-            $employee->photo = $path;
+            $file = $request->file('photo');
+            $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $dir = public_path('uploads/photos/employees');
+            if (!file_exists($dir)) mkdir($dir, 0755, true);
+            $file->move($dir, $filename);
+            $employee->photo = 'photos/employees/' . $filename;
         }
 
         $employee->save();
@@ -121,14 +128,21 @@ class ProfileController extends Controller
         if (!$employee) {
             $employee = \App\Models\Employee::create([
                 'user_id' => $user->id,
-                'employee_code' => 'EMP' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
                 'join_date' => now()->toDateString(),
             ]);
         }
-        if ($employee->photo && Storage::disk('public')->exists($employee->photo)) {
-            Storage::disk('public')->delete($employee->photo);
+        if ($employee->photo) {
+            $oldPath = public_path('uploads/' . $employee->photo);
+            if (file_exists($oldPath)) unlink($oldPath);
+            $altOld = public_path($employee->photo);
+            if (file_exists($altOld) && str_starts_with($employee->photo, 'uploads/')) unlink($altOld);
         }
-        $employee->photo = $request->file('photo')->store('photos/employees', 'public');
+        $file = $request->file('photo');
+        $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+        $dir = public_path('uploads/photos/employees');
+        if (!file_exists($dir)) mkdir($dir, 0755, true);
+        $file->move($dir, $filename);
+        $employee->photo = 'photos/employees/' . $filename;
         $employee->save();
         return back()->with('success', 'Avatar berhasil diperbarui!');
     }

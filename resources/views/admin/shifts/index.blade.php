@@ -10,9 +10,9 @@
         <h3 class="card-title">Daftar Shift ({{ $shifts->count() }})</h3>
         <a href="{{ route('admin.shifts.create') }}" class="btn btn-primary btn-sm ml-auto"><i class="fas fa-plus"></i> Tambah Shift</a>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover table-bordered mb-0">
+            <table id="datatable-shifts" class="table table-hover table-bordered table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light"><tr><th>#</th><th>Nama</th><th>Jam</th><th>Toleransi</th><th>Overnight</th><th>Warna</th><th class="text-center">Karyawan</th><th style="width:160px;">Aksi</th></tr></thead>
                 <tbody>
                 @forelse($shifts as $i=>$s)

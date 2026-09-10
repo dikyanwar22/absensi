@@ -9,8 +9,9 @@
         <h3 class="card-title">Daftar Periode</h3>
         <a href="{{ route('admin.payrolls.create') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Buat Periode Baru</a>
     </div>
-    <div class="card-body p-0">
-        <table class="table table-sm table-bordered">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="datatable-payrolls" class="table table-sm table-bordered table-striped datatable" style="width:100%">
             <thead><tr><th>Periode</th><th>Tanggal</th><th>Status</th><th>Jml Karyawan</th><th>Total Rp</th><th>Aksi</th></tr></thead>
             <tbody>
             @forelse($payrolls as $p)
@@ -33,7 +34,8 @@
             @endforelse
             </tbody>
         </table>
+        </div>
     </div>
-    <div class="card-footer">{{ $payrolls->links() }}</div>
+    <div class="card-footer"><small class="text-muted">Total {{ $payrolls->count() }} periode — DataTables pagination aktif</small></div>
 </div>
 @endsection

@@ -21,7 +21,7 @@ class PositionController extends Controller
             $query->where('department_id', $dept);
         }
 
-        $positions = $query->paginate(15)->withQueryString();
+        $positions = $query->get();
         $departments = Department::orderBy('name')->get();
         return view('admin.positions.index', compact('positions','departments'));
     }

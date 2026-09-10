@@ -10,9 +10,9 @@
         <h3 class="card-title">Daftar Lokasi ({{ $locations->count() }})</h3>
         <a href="{{ route('admin.office-locations.create') }}" class="btn btn-primary btn-sm ml-auto"><i class="fas fa-plus"></i> Tambah Lokasi</a>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover table-bordered mb-0">
+            <table id="datatable-locations" class="table table-hover table-bordered table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light"><tr><th>#</th><th>Nama</th><th>Alamat</th><th>Latitude / Longitude</th><th>Radius</th><th>Status</th><th>Karyawan</th><th>Aksi</th></tr></thead>
                 <tbody>
                 @forelse($locations as $i=>$loc)

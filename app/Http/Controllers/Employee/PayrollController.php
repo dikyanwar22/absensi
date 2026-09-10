@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Models\Payroll;
 use App\Models\PayrollDetail;
+use App\Models\CompanySetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -50,11 +51,12 @@ class PayrollController extends Controller
             abort(403, 'Tidak boleh akses slip gaji orang lain');
         }
         // pastikan payroll sudah dikunci
-        $detail->load(['user.employee.department','user.employee.position','payroll']);
+        $detail->load(['user.employee.department','user.employee.position','payroll','deductionItems']);
         if ($detail->payroll->status !== 'locked') {
             return back()->withErrors(['msg' => 'Slip gaji belum tersedia, menunggu HRD kunci periode.']);
         }
-        $pdf = Pdf::loadView('admin.payrolls.slip', compact('detail'));
+        $company = CompanySetting::get();
+        $pdf = Pdf::loadView('admin.payrolls.slip', compact('detail','company'));
         return $pdf->download("Slip-{$detail->user->nik}-{$detail->payroll->period}.pdf");
     }
 }

@@ -8,7 +8,7 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title">Daftar Departemen ({{ $departments->total() }})</h3>
+        <h3 class="card-title">Daftar Departemen ({{ $departments->count() }})</h3>
         <div class="ml-auto d-flex gap-2">
             <form method="GET" class="form-inline mr-2">
                 <div class="input-group input-group-sm" style="width:220px;">
@@ -19,16 +19,16 @@
             <a href="{{ route('admin.departments.create') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Tambah Departemen</a>
         </div>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover table-bordered mb-0">
+            <table id="datatable-departments" class="table table-hover table-bordered table-striped datatable mb-0" style="width:100%">
                 <thead class="thead-light">
                     <tr><th style="width:50px;">#</th><th>Nama Departemen</th><th>Deskripsi</th><th class="text-center">Jabatan</th><th class="text-center">Karyawan</th><th style="width:160px;">Aksi</th></tr>
                 </thead>
                 <tbody>
                 @forelse($departments as $i => $d)
                     <tr>
-                        <td>{{ $departments->firstItem() + $i }}</td>
+                        <td>{{ $i+1 }}</td>
                         <td><i class="fas fa-building text-primary mr-1"></i> <strong>{{ $d->name }}</strong></td>
                         <td><small class="text-muted">{{ $d->description ?: '-' }}</small></td>
                         <td class="text-center"><span class="badge bg-info">{{ $d->positions_count }}</span></td>
@@ -48,9 +48,8 @@
             </table>
         </div>
     </div>
-    <div class="card-footer d-flex justify-content-between align-items-center">
-        <small class="text-muted">Menampilkan {{ $departments->firstItem() ?? 0 }}-{{ $departments->lastItem() ?? 0 }} dari {{ $departments->total() }}</small>
-        {{ $departments->links() }}
+    <div class="card-footer">
+        <small class="text-muted">Total {{ $departments->count() }} departemen — DataTables pagination aktif (10/25/50/100 per halaman)</small>
     </div>
 </div>
 

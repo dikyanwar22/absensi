@@ -10,13 +10,38 @@ use Carbon\Carbon;
 
 class LeaveController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $leaves = Leave::with(['leaveType','supervisor','backupUser'])
+        // Default 01 - 31 bulan ini (tidak berat jika sudah banyak data)
+        $start = $request->query('start_date') ?: Carbon::now()->startOfMonth()->toDateString();
+        $end = $request->query('end_date') ?: Carbon::now()->endOfMonth()->toDateString();
+
+        try {
+            $startCarbon = Carbon::parse($start);
+            $endCarbon = Carbon::parse($end);
+            if ($startCarbon->gt($endCarbon)) {
+                [$start, $end] = [$end, $start];
+            }
+        } catch (\Throwable $e) {
+            $start = Carbon::now()->startOfMonth()->toDateString();
+            $end = Carbon::now()->endOfMonth()->toDateString();
+        }
+
+        $query = Leave::with(['leaveType','supervisor','backupUser'])
             ->where('user_id', auth()->id())
-            ->orderByDesc('created_at')
-            ->paginate(10);
-        return view('employee.leaves.index', compact('leaves'));
+            // Filter overlap: cuti yang bersinggungan dengan range filter
+            ->where(function($q) use ($start, $end) {
+                $q->whereBetween('start_date', [$start, $end])
+                  ->orWhereBetween('end_date', [$start, $end])
+                  ->orWhere(function($q2) use ($start, $end) {
+                      $q2->where('start_date', '<=', $start)->where('end_date', '>=', $end);
+                  });
+            })
+            ->orderByDesc('created_at');
+
+        $leaves = $query->paginate(10)->withQueryString();
+
+        return view('employee.leaves.index', compact('leaves','start','end'));
     }
 
     public function create()
@@ -37,7 +62,22 @@ class LeaveController extends Controller
             $supervisors = collect();
             $backups = collect();
         }
-        return view('employee.leaves.create', compact('types','supervisors','backups'));
+
+        // Hitung sisa jatah cuti tahunan (kuota 12) - hanya yang sudah approved HRD yang mengurangi
+        $cutiType = LeaveType::where('name', 'Cuti Tahunan')->first();
+        $used = 0;
+        $remaining = $cutiType?->quota_days ?? 12;
+        $year = date('Y');
+        if ($cutiType) {
+            $used = Leave::where('user_id', auth()->id())
+                ->where('leave_type_id', $cutiType->id)
+                ->where('final_status', 'approved')
+                ->whereYear('start_date', $year)
+                ->sum('total_days');
+            $remaining = max(0, $cutiType->quota_days - $used);
+        }
+
+        return view('employee.leaves.create', compact('types','supervisors','backups','cutiType','used','remaining','year'));
     }
 
     public function store(Request $request)
@@ -79,15 +119,20 @@ class LeaveController extends Controller
         $end = Carbon::parse($request->end_date);
         $totalDays = $start->diffInDays($end) + 1;
 
-        // Cek saldo cuti tahunan (12 hari)
-        if ($type->name === 'Cuti Tahunan') {
+        // Cek saldo cuti tahunan (12 hari) - hitung per tahun dari start_date pengajuan
+        if ($type->name === 'Cuti Tahunan' && $type->quota_days > 0) {
+            $year = $start->year;
             $used = Leave::where('user_id', auth()->id())
                 ->where('leave_type_id', $type->id)
                 ->where('final_status', 'approved')
-                ->whereYear('start_date', date('Y'))
+                ->whereYear('start_date', $year)
                 ->sum('total_days');
+            $remaining = $type->quota_days - $used;
+            if ($remaining <= 0) {
+                return back()->withErrors(['quota' => "Jatah cuti tahun $year sudah habis ($used/{$type->quota_days} hari terpakai). Tidak bisa mengajukan Cuti Tahunan lagi."])->withInput();
+            }
             if ($used + $totalDays > $type->quota_days) {
-                return back()->withErrors(['quota' => "Saldo cuti tidak cukup! Sisa " . ($type->quota_days - $used) . " hari, ajukan $totalDays hari."])->withInput();
+                return back()->withErrors(['quota' => "Saldo cuti tahun $year tidak cukup! Terpakai $used dari {$type->quota_days} hari, sisa $remaining hari, ajukan $totalDays hari."])->withInput();
             }
         }
 
@@ -112,7 +157,12 @@ class LeaveController extends Controller
 
         $docPath = null;
         if ($request->hasFile('document')) {
-            $docPath = $request->file('document')->store('leave_docs', 'public');
+            $file = $request->file('document');
+            $filename = time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $dir = public_path('uploads/leave_docs');
+            if (!file_exists($dir)) mkdir($dir, 0755, true);
+            $file->move($dir, $filename);
+            $docPath = 'leave_docs/' . $filename;
         }
 
         Leave::create([

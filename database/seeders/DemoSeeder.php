@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -16,51 +16,94 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // Departments
-        $it = Department::create(['name' => 'IT', 'description' => 'Teknologi Informasi']);
-        $hrd = Department::create(['name' => 'HRD', 'description' => 'Human Resource']);
-        $prod = Department::create(['name' => 'Produksi', 'description' => 'Produksi']);
+        // Spatie Roles - buat dulu agar assignRole tidak error, gunakan firstOrCreate
+        $roleHrd = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'hrd']);
+        $roleSpv = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'supervisor']);
+        $roleStaff = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'staff']);
 
-        // Positions
-        $staff = Position::create(['department_id' => $it->id, 'name' => 'Staff IT', 'basic_salary_default' => 5000000]);
-        $spv = Position::create(['department_id' => $it->id, 'name' => 'Supervisor IT', 'basic_salary_default' => 8000000]);
+        // Departments (idempotent)
+        $it = Department::firstOrCreate(['name' => 'IT'], ['description' => 'Teknologi Informasi']);
+        $hrdDept = Department::firstOrCreate(['name' => 'HRD'], ['description' => 'Human Resource']);
+        $prod = Department::firstOrCreate(['name' => 'Produksi'], ['description' => 'Produksi']);
+
+        // Positions (firstOrCreate by name + department)
+        $staffIt = Position::firstOrCreate(['name' => 'Staff IT', 'department_id' => $it->id], ['basic_salary_default' => 5000000]);
+        $spvIt = Position::firstOrCreate(['name' => 'Supervisor IT', 'department_id' => $it->id], ['basic_salary_default' => 8000000]);
+        $staffHrd = Position::firstOrCreate(['name' => 'Staff HRD', 'department_id' => $hrdDept->id], ['basic_salary_default' => 6000000]);
+        $managerHrd = Position::firstOrCreate(['name' => 'Manager HRD', 'department_id' => $hrdDept->id], ['basic_salary_default' => 10000000]);
+        $staffProd = Position::firstOrCreate(['name' => 'Staff Produksi', 'department_id' => $prod->id], ['basic_salary_default' => 4500000]);
 
         // Shifts - 3 shift sesuai PRD
-        Shift::create(['name' => 'Pagi', 'start_time' => '07:00:00', 'end_time' => '15:00:00', 'tolerance_late' => 15, 'is_overnight' => false, 'color' => '#198754']);
-        Shift::create(['name' => 'Siang', 'start_time' => '14:00:00', 'end_time' => '22:00:00', 'tolerance_late' => 15, 'is_overnight' => false, 'color' => '#ffc107']);
-        Shift::create(['name' => 'Malam', 'start_time' => '22:00:00', 'end_time' => '06:00:00', 'tolerance_late' => 15, 'is_overnight' => true, 'color' => '#6f42c1']);
+        $shiftPagi = Shift::firstOrCreate(['name' => 'Pagi'], ['start_time' => '07:00:00', 'end_time' => '15:00:00', 'tolerance_late' => 15, 'is_overnight' => false, 'color' => '#198754']);
+        Shift::firstOrCreate(['name' => 'Siang'], ['start_time' => '14:00:00', 'end_time' => '22:00:00', 'tolerance_late' => 15, 'is_overnight' => false, 'color' => '#ffc107']);
+        Shift::firstOrCreate(['name' => 'Malam'], ['start_time' => '22:00:00', 'end_time' => '06:00:00', 'tolerance_late' => 15, 'is_overnight' => true, 'color' => '#6f42c1']);
 
         // Office Location dengan lat/lng
-        $office = OfficeLocation::create([
-            'name' => 'Kantor Pusat',
-            'address' => 'Jl. Contoh No.1 Jakarta',
-            'latitude' => -6.20880000,
-            'longitude' => 106.84560000,
-            'radius_meter' => 100,
-            'is_active' => true,
-        ]);
+        $office = OfficeLocation::firstOrCreate(
+            ['name' => 'Kantor Pusat'],
+            ['address' => 'Jl. Contoh No.1 Jakarta', 'latitude' => -6.20880000, 'longitude' => 106.84560000, 'radius_meter' => 100, 'is_active' => true]
+        );
 
         // Leave Types
-        LeaveType::create(['name' => 'Cuti Tahunan', 'quota_days' => 12, 'is_paid' => true, 'requires_document' => false]);
-        LeaveType::create(['name' => 'Sakit', 'quota_days' => 0, 'is_paid' => true, 'requires_document' => true]);
-        LeaveType::create(['name' => 'Izin', 'quota_days' => 0, 'is_paid' => false, 'requires_document' => false]);
+        LeaveType::firstOrCreate(['name' => 'Cuti Tahunan'], ['quota_days' => 12, 'is_paid' => true, 'requires_document' => false]);
+        LeaveType::firstOrCreate(['name' => 'Sakit'], ['quota_days' => 0, 'is_paid' => true, 'requires_document' => true]);
+        LeaveType::firstOrCreate(['name' => 'Izin'], ['quota_days' => 0, 'is_paid' => false, 'requires_document' => false]);
+        LeaveType::firstOrCreate(['name' => 'Cuti Penting'], ['quota_days' => 3, 'is_paid' => true, 'requires_document' => false]);
 
-        // Users
-        $hrdUser = User::create(['name' => 'HRD Admin', 'nik' => 'HRD001', 'email' => 'hrd@example.com', 'role' => 'hrd', 'password' => Hash::make('password')]);
-        $spvUser = User::create(['name' => 'Supervisor IT', 'nik' => 'SPV001', 'email' => 'spv@example.com', 'role' => 'supervisor', 'password' => Hash::make('password')]);
-        $staffUser = User::create(['name' => 'Budi Karyawan', 'nik' => 'STF001', 'email' => 'budi@example.com', 'role' => 'staff', 'password' => Hash::make('password')]);
+        // Helper buat user + employee (1 login semua role tetap punya employee agar bisa absen/cuti)
+        $makeUser = function (array $userData, array $empData) use ($office, $shiftPagi) {
+            $user = User::firstOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'nik' => $userData['nik'],
+                    'role' => $userData['role'],
+                    'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
+                ]
+            );
+            // update nik/role jika sudah ada tapi beda
+            if ($user->nik !== $userData['nik'] || $user->role !== $userData['role']) {
+                $user->update(['nik' => $userData['nik'], 'role' => $userData['role']]);
+            }
+            // assign spatie role
+            if (!$user->hasRole($userData['role'])) {
+                $user->syncRoles([$userData['role']]);
+            }
+            // buat employee jika belum ada â€” WAJIB agar HRD/Supervisor bisa absen, ajukan cuti, lihat riwayat & slip gaji
+            Employee::firstOrCreate(
+                ['user_id' => $user->id],
+                array_merge([
+                    'shift_id' => $shiftPagi->id,
+                    'office_location_id' => $office->id,
+                    'is_active' => true,
+                ], $empData)
+            );
+            return $user;
+        };
 
-        // Employees
-        Employee::create(['user_id' => $hrdUser->id, 'department_id' => $hrd->id, 'position_id' => $spv->id, 'shift_id' => 1, 'office_location_id' => $office->id, 'employee_code' => 'EMP-HRD001', 'join_date' => '2023-01-01', 'employment_status' => 'tetap', 'is_active' => true]);
-        Employee::create(['user_id' => $spvUser->id, 'department_id' => $it->id, 'position_id' => $spv->id, 'shift_id' => 1, 'office_location_id' => $office->id, 'employee_code' => 'EMP-SPV001', 'join_date' => '2023-02-01', 'employment_status' => 'tetap', 'is_active' => true]);
-        Employee::create(['user_id' => $staffUser->id, 'department_id' => $it->id, 'position_id' => $staff->id, 'shift_id' => 1, 'office_location_id' => $office->id, 'employee_code' => 'EMP-STF001', 'join_date' => '2024-01-15', 'employment_status' => 'kontrak', 'contract_end_date' => '2026-12-31', 'is_active' => true]);
+        // 1. HRD â€” juga karyawan (bisa absen/cuti/riwayat/slip gaji milik sendiri)
+        $makeUser(
+            ['name' => 'HRD Admin', 'nik' => 'HRD001', 'email' => 'hrd@example.com', 'role' => 'hrd'],
+        );
+        $makeUser(
+            ['name' => 'Siti HRD', 'nik' => 'HRD002', 'email' => 'siti.hrd@example.com', 'role' => 'hrd'],
+        );
 
-        // Assign Spatie Roles
-        \Spatie\Permission\Models\Role::create(['name' => 'hrd']);
-        \Spatie\Permission\Models\Role::create(['name' => 'supervisor']);
-        \Spatie\Permission\Models\Role::create(['name' => 'staff']);
-        $hrdUser->assignRole('hrd');
-        $spvUser->assignRole('supervisor');
-        $staffUser->assignRole('staff');
+        // 2. Supervisor â€” juga karyawan
+        $makeUser(
+            ['name' => 'Supervisor IT', 'nik' => 'SPV001', 'email' => 'spv@example.com', 'role' => 'supervisor'],
+        );
+        $makeUser(
+            ['name' => 'Supervisor Produksi', 'nik' => 'SPV002', 'email' => 'spv.prod@example.com', 'role' => 'supervisor'],
+        );
+
+        // 3. Staff â€” karyawan biasa
+        $makeUser(
+            ['name' => 'Budi Karyawan', 'nik' => 'STF001', 'email' => 'budi@example.com', 'role' => 'staff'],
+        );
+        $makeUser(
+            ['name' => 'Andi Produksi', 'nik' => 'STF002', 'email' => 'andi@example.com', 'role' => 'staff'],
+        );
     }
 }

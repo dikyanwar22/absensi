@@ -128,8 +128,8 @@ class NotificationController extends Controller
                     'color' => 'warning',
                     'bg' => '#fff3cd',
                     'title' => "Terlambat {$todayAtt->late_minutes} menit Hari Ini",
-                    'desc' => "Masuk " . Carbon::parse($todayAtt->check_in)->format('H:i') . " • Tetap semangat!",
-                    'time' => $todayAtt->check_in,
+                    'desc' => "Masuk " . ($todayAtt->check_in ? Carbon::parse($todayAtt->check_in)->format('H:i') : '-') . " • Tetap semangat!",
+                    'time' => $todayAtt->check_in ?? $todayAtt->date,
                     'link' => route('employee.history'),
                     'badge' => 'Terlambat',
                 ]);
@@ -140,8 +140,8 @@ class NotificationController extends Controller
                     'color' => 'info',
                     'bg' => '#cff4fc',
                     'title' => "Jangan Lupa Absen Pulang",
-                    'desc' => "Masuk " . Carbon::parse($todayAtt->check_in)->format('H:i') . " • Absen pulang " . ($todayAtt->check_in ? "tersisa" : "menunggu"),
-                    'time' => $todayAtt->check_in,
+                    'desc' => "Masuk " . ($todayAtt->check_in ? Carbon::parse($todayAtt->check_in)->format('H:i') : '-') . " • Absen pulang " . ($todayAtt->check_in ? "tersisa" : "menunggu"),
+                    'time' => $todayAtt->check_in ?? $todayAtt->date,
                     'link' => route('employee.home'),
                     'badge' => 'Pulang',
                 ]);
@@ -158,7 +158,7 @@ class NotificationController extends Controller
                 'color' => 'warning',
                 'bg' => '#fff3cd',
                 'title' => "Terlambat pada " . Carbon::parse($a->date)->format('d M Y'),
-                'desc' => "Telat {$a->late_minutes} menit • Masuk " . Carbon::parse($a->check_in)->format('H:i'),
+                'desc' => "Telat {$a->late_minutes} menit • Masuk " . ($a->check_in ? Carbon::parse($a->check_in)->format('H:i') : '-'),
                 'time' => $a->check_in ?? $a->date,
                 'link' => route('employee.history'),
                 'badge' => 'Riwayat',
@@ -202,6 +202,30 @@ class NotificationController extends Controller
 
         // urutkan terbaru dulu
         $notifications = $notifications->sortByDesc(fn($n) => Carbon::parse($n['time'])->timestamp)->values();
+
+        // Tandai sudah dibaca: total notifikasi jadi 0 setelah klik halaman ini
+        // pakai waktu terbaru dari notifikasi agar semua yang tampil dianggap sudah dibaca (atasi beda clock)
+        try {
+            $latest = null;
+            if ($notifications->isNotEmpty()) {
+                $latest = $notifications->max(fn($n) => Carbon::parse($n['time'])->timestamp);
+                $latest = $latest ? Carbon::createFromTimestamp($latest) : null;
+            }
+            $now = Carbon::now();
+            $readAt = $now;
+            if ($latest && $latest->greaterThan($now)) {
+                $readAt = $latest->copy()->addSecond();
+            } elseif ($latest) {
+                // jika latest ada tapi now lebih baru, pakai now (sudah pasti > latest)
+                $readAt = $now;
+            }
+            // pastikan sedikit di masa depan agar where > readAt tidak kehitung lagi
+            $readAt = $readAt->copy()->addSecond();
+            $user->update(['notifications_read_at' => $readAt]);
+            if (auth()->check()) {
+                auth()->user()->notifications_read_at = $readAt;
+            }
+        } catch (\Throwable $e) {}
 
         return view('employee.notifications', compact('notifications'));
     }

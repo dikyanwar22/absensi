@@ -2,12 +2,18 @@
 @section('title','Dashboard')
 @section('header','Dashboard HRD')
 @section('content')
+@if(isset($akunPending) && $akunPending>0)
+<div class="alert alert-warning"><i class="fas fa-user-clock"></i> Ada <strong>{{ $akunPending }}</strong> akun baru menunggu persetujuan HRD (status_account=0). <a href="{{ route('admin.employees.pending') }}" class="btn btn-sm btn-warning ml-2">Kelola Akun Pending</a> — Akun pending tidak bisa login sampai diaktifkan.</div>
+@endif
 <div class="row">
-    <div class="col-lg-3 col-6"><div class="small-box bg-info"><div class="inner"><h3>150</h3><p>Karyawan Aktif</p></div><div class="icon"><i class="fas fa-users"></i></div></div></div>
-    <div class="col-lg-3 col-6"><div class="small-box bg-success"><div class="inner"><h3>142</h3><p>Hadir Hari Ini</p></div><div class="icon"><i class="fas fa-check"></i></div></div></div>
-    <div class="col-lg-3 col-6"><div class="small-box bg-warning"><div class="inner"><h3>5</h3><p>Terlambat</p></div><div class="icon"><i class="fas fa-clock"></i></div></div></div>
-    <div class="col-lg-3 col-6"><div class="small-box bg-danger"><div class="inner"><h3>3</h3><p>Cuti Pending</p></div><div class="icon"><i class="fas fa-envelope"></i></div></div></div>
+    <div class="col-lg-3 col-6"><div class="small-box bg-info"><div class="inner"><h3>{{ $totalKaryawan ?? 0 }}</h3><p>Karyawan Aktif</p></div><div class="icon"><i class="fas fa-users"></i></div><a href="{{ route('admin.employees.index') }}" class="small-box-footer">Lihat <i class="fas fa-arrow-circle-right"></i></a></div></div>
+    <div class="col-lg-3 col-6"><div class="small-box bg-success"><div class="inner"><h3>{{ $hadirHariIni ?? 0 }}</h3><p>Hadir Hari Ini</p></div><div class="icon"><i class="fas fa-check"></i></div></div></div>
+    <div class="col-lg-3 col-6"><div class="small-box bg-warning"><div class="inner"><h3>{{ $terlambatHariIni ?? 0 }}</h3><p>Terlambat</p></div><div class="icon"><i class="fas fa-clock"></i></div></div></div>
+    <div class="col-lg-3 col-6"><div class="small-box bg-danger"><div class="inner"><h3>{{ $cutiPending ?? 0 }}</h3><p>Cuti Pending</p></div><div class="icon"><i class="fas fa-envelope"></i></div><a href="{{ route('admin.leaves.index') }}" class="small-box-footer">Kelola <i class="fas fa-arrow-circle-right"></i></a></div></div>
 </div>
+@if(isset($akunPending))
+<div class="row"><div class="col-lg-3 col-6"><div class="small-box bg-warning"><div class="inner"><h3>{{ $akunPending }}</h3><p>Akun Pending</p></div><div class="icon"><i class="fas fa-user-clock"></i></div><a href="{{ route('admin.employees.pending') }}" class="small-box-footer">ACC HRD <i class="fas fa-arrow-circle-right"></i></a></div></div></div>
+@endif
 
 <div class="row">
     <div class="col-md-8">

@@ -19,7 +19,7 @@ class DepartmentController extends Controller
             });
         }
 
-        $departments = $query->paginate(15)->withQueryString();
+        $departments = $query->get();
         return view('admin.departments.index', compact('departments'));
     }
 

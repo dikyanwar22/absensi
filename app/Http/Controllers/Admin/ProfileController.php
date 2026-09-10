@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
@@ -42,25 +42,32 @@ class ProfileController extends Controller
         if (!$employee) {
             $employee = new \App\Models\Employee();
             $employee->user_id = $user->id;
-            $employee->employee_code = 'EMP'.str_pad($user->id,4,'0',STR_PAD_LEFT);
             $employee->join_date = now()->toDateString();
         }
         $employee->phone = $request->phone;
         $employee->address = $request->address;
 
         if ($request->hasFile('photo')) {
-            if ($employee->photo && Storage::disk('public')->exists($employee->photo)) {
-                Storage::disk('public')->delete($employee->photo);
+            if ($employee->photo) {
+                $oldPath = public_path('uploads/' . $employee->photo);
+                if (file_exists($oldPath)) unlink($oldPath);
+                $altOld = public_path($employee->photo);
+                if (file_exists($altOld) && str_starts_with($employee->photo, 'uploads/')) unlink($altOld);
             }
-            $employee->photo = $request->file('photo')->store('photos/employees','public');
+            $file = $request->file('photo');
+            $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $dir = public_path('uploads/photos/employees');
+            if (!file_exists($dir)) mkdir($dir, 0755, true);
+            $file->move($dir, $filename);
+            $employee->photo = 'photos/employees/' . $filename;
             $employee->save();
         } else {
             $employee->save();
         }
 
-        // password update opsional via field terpisah
+        // password update opsional via field terpisah - tanpa batasan
         if ($request->filled('password')) {
-            $request->validate(['password'=>'required|string|min:6|max:50|confirmed']);
+            $request->validate(['password'=>'required|string|confirmed']);
             $user->password = Hash::make($request->password);
             $user->save();
         }

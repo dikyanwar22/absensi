@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PayrollDetail extends Model
 {
@@ -20,4 +21,5 @@ class PayrollDetail extends Model
 
     public function payroll(): BelongsTo { return $this->belongsTo(Payroll::class); }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function deductionItems(): HasMany { return $this->hasMany(PayrollDeductionItem::class, 'payroll_detail_id'); }
 }

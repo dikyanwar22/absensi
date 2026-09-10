@@ -17,7 +17,9 @@ class DashboardController extends Controller
         $hadirHariIni = Attendance::whereDate('date', $today)->where('status', '!=', 'alpha')->count();
         $terlambatHariIni = Attendance::whereDate('date', $today)->where('status', 'terlambat')->count();
         $cutiPending = Leave::where('final_status', 'pending')->count();
+        $akunPending = 0;
+        try { $akunPending = User::where('status_account', 0)->count(); } catch (\Throwable $e) {}
 
-        return view('admin.dashboard', compact('totalKaryawan', 'hadirHariIni', 'terlambatHariIni', 'cutiPending'));
+        return view('admin.dashboard', compact('totalKaryawan', 'hadirHariIni', 'terlambatHariIni', 'cutiPending','akunPending'));
     }
 }

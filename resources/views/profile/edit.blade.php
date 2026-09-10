@@ -20,8 +20,8 @@
         $photo = null;
         try {
             $emp = auth()->user()->employee ?? null;
-            if($emp && $emp->photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($emp->photo)){
-                $photo = asset('storage/'.$emp->photo);
+            if($emp && $emp->photo && file_exists(public_path('uploads/'.$emp->photo))){
+                $photo = asset('uploads/'.$emp->photo);
             }
         } catch(\Throwable $e){}
         $avatar = $photo ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name).'&background=0d6efd&color=fff&size=48';
@@ -29,7 +29,7 @@
     <img src="{{ $avatar }}" class="rounded-circle" width="48" height="48" style="object-fit:cover;">
     <div class="flex-grow-1">
         <div class="fw-semibold small">{{ auth()->user()->name }}</div>
-        <small class="text-muted">{{ auth()->user()->email }}<br>{{ auth()->user()->nik ?? '-' }} • {{ auth()->user()->role }}</small>
+        <small class="text-muted">{{ auth()->user()->email }}<br>{{ auth()->user()->nik ?? '-' }} • {{ auth()->user()->display_role }}</small>
     </div>
     <a href="{{ route('employee.profile') }}" class="btn btn-sm btn-outline-primary">Profile</a>
 </div>
@@ -37,7 +37,7 @@
 {{-- Form Ganti Password - Mobile Card --}}
 <div class="card card-rounded p-3 mb-3">
     <h6 class="mb-2"><i class="bi bi-shield-lock me-1"></i> Update Password</h6>
-    <p class="small text-muted mb-3">Gunakan minimal 8 karakter, kombinasi huruf & angka.</p>
+    <p class="small text-muted mb-3">Buat password bebas tanpa batasan panjang.</p>
 
     <form method="post" action="{{ route('password.update') }}">
         @csrf
@@ -53,7 +53,7 @@
 
         <div class="mb-3">
             <label for="update_password_password" class="form-label small mb-1">Password Baru <span class="text-danger">*</span></label>
-            <input id="update_password_password" name="password" type="password" class="form-control form-control-sm" autocomplete="new-password" required placeholder="Minimal 8 karakter">
+            <input id="update_password_password" name="password" type="password" class="form-control form-control-sm" autocomplete="new-password" required placeholder="Password baru">
             @if($errors->updatePassword->has('password'))
                 <small class="text-danger">{{ $errors->updatePassword->first('password') }}</small>
             @endif

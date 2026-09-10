@@ -25,14 +25,14 @@
         </div>
     </div>
     @if($payroll->status=='draft')
-    <div class="alert alert-info small mb-0"><i class="fas fa-info-circle"></i> Mode <strong>Draft</strong> — HRD bisa <strong>Edit Rupiah</strong> (pokok, tunjangan, bonus, potongan) sebelum Kunci. Fleksibel: Locked → Unlock → Edit → Lock lagi.</div>
+    <div class="alert alert-info small mb-0"><i class="fas fa-info-circle"></i> Mode <strong>Draft</strong> — HRD bisa <strong>Edit Rupiah</strong> (pokok, tunjangan, bonus, potongan dinamis) sebelum Kunci. Potongan dinamis (Serikat, Liburan, Ganti Rugi) muncul per baris di slip. Salah input/komplain → Edit per karyawan (isi 0 untuk hapus potongan karyawan itu). Fleksibel: Locked → Unlock → Edit → Lock lagi.</div>
     @else
-    <div class="alert alert-warning small mb-0"><i class="fas fa-unlock"></i> Periode <strong>Locked</strong> — klik <strong>Unlock ke Draft</strong> untuk edit lagi, lalu <strong>Kunci</strong> kembali. Slip tetap bisa dilihat karyawan saat Locked.</div>
+    <div class="alert alert-warning small mb-0"><i class="fas fa-unlock"></i> Periode <strong>Locked</strong> — klik <strong>Unlock ke Draft</strong> untuk edit lagi, lalu <strong>Kunci</strong> kembali. Slip tetap bisa dilihat karyawan saat Locked. Rincian potongan dinamis tetap tersimpan di slip.</div>
     @endif
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped">
-                <thead><tr><th>NIK</th><th>Nama</th><th>Dept</th><th>Hadir</th><th>Telat</th><th>Alpha</th><th>Pokok</th><th>Tunjangan</th><th>Lembur+Bonus</th><th>Potongan</th><th>Bersih</th><th>Slip</th><th>Edit</th></tr></thead>
+            <table id="datatable-payroll-details" class="table table-sm table-bordered table-striped datatable" style="width:100%">
+                <thead><tr><th>NIK</th><th>Nama</th><th>Dept</th><th>Hadir</th><th>Telat</th><th>Alpha</th><th>Pokok</th><th>Tunjangan</th><th>Lembur+Bonus</th><th>Potongan (Dinamis)</th><th>Bersih</th><th>Slip</th><th>Edit</th></tr></thead>
                 <tbody>
                 @foreach($payroll->details as $d)
                 <tr>
@@ -45,7 +45,16 @@
                     <td><small>Rp {{ number_format($d->basic_salary,0,',','.') }}</small></td>
                     <td><small>Rp {{ number_format(array_sum($d->allowances ?? []),0,',','.') }}</small></td>
                     <td><small>Rp {{ number_format($d->overtime_pay + $d->bonus + $d->thr,0,',','.') }}</small></td>
-                    <td><small class="text-danger">Rp {{ number_format($d->total_deduction,0,',','.') }}</small></td>
+                    <td>
+                        <small class="text-danger">Rp {{ number_format($d->total_deduction,0,',','.') }}</small>
+                        @php
+                            $sys = ['terlambat','alpha','bpjs_kes','bpjs_tk','lain'];
+                            $dyn = collect($d->deductions ?? [])->reject(fn($v,$k)=>in_array($k,$sys))->keys();
+                        @endphp
+                        @if($dyn->isNotEmpty())
+                            <br><small class="text-muted">{{ $dyn->implode(', ') }}</small>
+                        @endif
+                    </td>
                     <td><strong>Rp {{ number_format($d->net_salary,0,',','.') }}</strong></td>
                     <td><a href="{{ route('admin.payrolls.slip', $d) }}" target="_blank" class="btn btn-xs btn-danger btn-sm"><i class="fas fa-print"></i> PDF</a></td>
                     <td>

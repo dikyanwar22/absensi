@@ -12,7 +12,7 @@
     <form method="POST" action="{{ route('admin.payrolls.update-detail',$detail) }}">
         @csrf @method('PUT')
         <div class="card-body">
-            <div class="alert alert-info small">Rumus: <code>Gross = Pokok + Tunjangan + Lembur + Bonus + THR</code> | <code>Net = Gross - Total Potongan</code> — Auto hitung saat save & update <code>payrolls.total_amount</code>.</div>
+            <div class="alert alert-info small">Rumus: <code>Gross = Pokok + Tunjangan + Lembur + Bonus + THR</code> | <code>Net = Gross - Total Potongan (Sistem + Dinamis)</code> — Auto hitung saat save & update <code>payrolls.total_amount</code>. Potongan dinamis (Serikat, Liburan, Ganti Rugi) bisa dihapus (isi 0) atau di-override per karyawan untuk handle salah input/komplain.</div>
             <div class="row">
                 <div class="col-md-4"><strong>Karyawan:</strong> {{ $detail->user->name }}<br><small class="text-muted">{{ $detail->user->nik }} • {{ $detail->user->employee->department->name ?? '-' }}</small></div>
                 <div class="col-md-4"><strong>Periode:</strong> {{ $detail->payroll->period }} ({{ $detail->payroll->start_date }} - {{ $detail->payroll->end_date }})</div>
@@ -33,18 +33,50 @@
             <div class="row">
                 <div class="col-md-4 form-group"><label>Bonus</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="bonus" class="form-control" value="{{ old('bonus',$detail->bonus) }}" min="0" step="1000" required></div></div>
                 <div class="col-md-4 form-group"><label>THR</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="thr" class="form-control" value="{{ old('thr',$detail->thr) }}" min="0" step="1000" required></div></div>
-                <div class="col-md-4 form-group"><label>Catatan</label><input type="text" name="notes" class="form-control form-control-sm" value="{{ old('notes',$detail->notes) }}" placeholder="Opsional"></div>
+                <div class="col-md-4 form-group"><label>Catatan (alasan komplain/koreksi)</label><input type="text" name="notes" class="form-control form-control-sm" value="{{ old('notes',$detail->notes) }}" placeholder="Opsional: koreksi kelebihan potong"></div>
             </div>
             <hr>
-            <h6>Potongan</h6>
+            <h6>Potongan Sistem (Otomatis)</h6>
             <div class="row">
-                <div class="col-md-2 form-group"><label>Terlambat</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_terlambat" class="form-control" value="{{ old('ded_terlambat',$detail->deductions['terlambat'] ?? 0) }}" min="0" step="1000" required></div></div>
-                <div class="col-md-2 form-group"><label>Alpha</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_alpha" class="form-control" value="{{ old('ded_alpha',$detail->deductions['alpha'] ?? 0) }}" min="0" step="1000" required></div></div>
-                <div class="col-md-2 form-group"><label>BPJS Kes 1%</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_bpjs_kes" class="form-control" value="{{ old('ded_bpjs_kes',$detail->deductions['bpjs_kes'] ?? 0) }}" min="0" step="1000" required></div></div>
-                <div class="col-md-2 form-group"><label>BPJS TK 2%</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_bpjs_tk" class="form-control" value="{{ old('ded_bpjs_tk',$detail->deductions['bpjs_tk'] ?? 0) }}" min="0" step="1000" required></div></div>
-                <div class="col-md-4 form-group"><label>Lain-lain (Kasbon/PPh21)</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_lain" class="form-control" value="{{ old('ded_lain',$detail->deductions['lain'] ?? 0) }}" min="0" step="1000" required></div></div>
+                <div class="col-md-3 form-group"><label>Terlambat</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_terlambat" class="form-control" value="{{ old('ded_terlambat',$detail->deductions['terlambat'] ?? 0) }}" min="0" step="1000" required></div></div>
+                <div class="col-md-3 form-group"><label>Alpha</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_alpha" class="form-control" value="{{ old('ded_alpha',$detail->deductions['alpha'] ?? 0) }}" min="0" step="1000" required></div></div>
+                <div class="col-md-3 form-group"><label>BPJS Kes 1%</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_bpjs_kes" class="form-control" value="{{ old('ded_bpjs_kes',$detail->deductions['bpjs_kes'] ?? 0) }}" min="0" step="1000" required></div></div>
+                <div class="col-md-3 form-group"><label>BPJS TK 2%</label><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="ded_bpjs_tk" class="form-control" value="{{ old('ded_bpjs_tk',$detail->deductions['bpjs_tk'] ?? 0) }}" min="0" step="1000" required></div></div>
             </div>
-            <div class="alert alert-secondary small">
+            <hr>
+            <h6>Potongan Dinamis (Input HRD — Serikat, Liburan, Ganti Rugi, dll) <small class="text-muted">— isi 0 untuk hapus potongan ini pada karyawan ini (komplain)</small></h6>
+            @php
+                $systemKeys = ['terlambat','alpha','bpjs_kes','bpjs_tk','lain'];
+                $dynamicDeductions = collect($detail->deductions ?? [])->reject(fn($v,$k) => in_array($k, $systemKeys));
+            @endphp
+            @if($dynamicDeductions->isEmpty())
+                <div class="alert alert-secondary small">Tidak ada potongan dinamis untuk karyawan ini. Anda bisa tambah baru di bawah.</div>
+            @else
+                <div class="row">
+                    @foreach($dynamicDeductions as $name => $amount)
+                    <div class="col-md-4 form-group">
+                        <label>{{ $name }}</label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend"><span class="input-group-text">Rp</span></div>
+                            <input type="number" name="deductions_dynamic[{{ $name }}]" class="form-control" value="{{ $amount }}" min="0" step="1000" placeholder="0 = hapus">
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
+            <div class="border p-2 rounded bg-light">
+                <strong>Tambah Potongan Insidentil khusus karyawan ini (opsional):</strong>
+                <small class="text-muted">Misal: karyawan ini saja yang kena Ganti Rugi, karyawan lain tidak.</small>
+                <div id="dynamic-add-rows">
+                    <div class="row mt-2">
+                        <div class="col-md-6"><input type="text" name="deduction_names[]" class="form-control form-control-sm" placeholder="Nama potongan baru (ex: Ganti Rugi Laptop)"></div>
+                        <div class="col-md-4"><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="deduction_amounts[]" class="form-control" min="0" step="1000" placeholder="0"></div></div>
+                        <div class="col-md-2"><button type="button" class="btn btn-sm btn-success" onclick="addDeductionRow()"><i class="fas fa-plus"></i></button></div>
+                    </div>
+                </div>
+                <small class="text-muted">Kosongkan jika tidak perlu. Jika ingin tambah potongan global untuk semua karyawan, gunakan menu Master Potongan.</small>
+            </div>
+            <div class="alert alert-secondary small mt-3">
                 Saat ini: Gross Rp {{ number_format($detail->gross_salary,0,',','.') }} | Potongan Rp {{ number_format($detail->total_deduction,0,',','.') }} | <strong>Net Rp {{ number_format($detail->net_salary,0,',','.') }}</strong> — akan dihitung ulang otomatis.
             </div>
         </div>
@@ -54,4 +86,15 @@
         </div>
     </form>
 </div>
+@push('scripts')
+<script>
+function addDeductionRow(){
+    const container = document.getElementById('dynamic-add-rows');
+    const row = document.createElement('div');
+    row.className = 'row mt-2';
+    row.innerHTML = `<div class="col-md-6"><input type="text" name="deduction_names[]" class="form-control form-control-sm" placeholder="Nama potongan"></div><div class="col-md-4"><div class="input-group input-group-sm"><div class="input-group-prepend"><span class="input-group-text">Rp</span></div><input type="number" name="deduction_amounts[]" class="form-control" min="0" step="1000" placeholder="0"></div></div><div class="col-md-2"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.row').remove()"><i class="fas fa-trash"></i></button></div>`;
+    container.appendChild(row);
+}
+</script>
+@endpush
 @endsection

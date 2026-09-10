@@ -25,7 +25,9 @@ class User extends Authenticatable
         'nik',
         'email',
         'role',
+        'status_account',
         'password',
+        'notifications_read_at',
     ];
 
     /**
@@ -45,6 +47,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'notifications_read_at' => 'datetime',
+        'status_account' => 'integer',
     ];
 
     public function employee(): HasOne
@@ -64,11 +68,35 @@ class User extends Authenticatable
 
     public function isHRD(): bool
     {
-        return $this->role === 'hrd';
+        $r = strtolower($this->role ?? '');
+        return $r === 'hrd' || str_contains($r, 'hrd') || str_contains($r, 'manager') || $r === 'manajer_finance' || $r === 'manager_finance';
     }
 
     public function isSupervisor(): bool
     {
-        return $this->role === 'supervisor';
+        $r = strtolower($this->role ?? '');
+        return $r === 'supervisor' || str_contains($r, 'supervisor') || str_contains($r, 'spv');
+    }
+
+    public function hasMenuAccess(string $menuKey): bool
+    {
+        return \App\Models\MenuSetting::canAccess($this->role ?? 'staff', $menuKey);
+    }
+
+    /**
+     * Label role elegan untuk UI: OFFICE_BOY -> OFFICE BOY, manager_finance -> MANAGER FINANCE
+     * Logic check tetap pakai ->role mentah (slug dengan underscore)
+     */
+    public function getDisplayRoleAttribute(): string
+    {
+        return strtoupper(str_replace('_', ' ', $this->role ?? 'STAFF'));
+    }
+
+    /**
+     * Versi Title Case: office_boy -> Office Boy (untuk ucfirst konteks)
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return \Illuminate\Support\Str::headline($this->role ?? 'staff');
     }
 }

@@ -12,8 +12,8 @@
 
 @php
     $photoUrl = null;
-    if (!empty($employee?->photo) && \Illuminate\Support\Facades\Storage::disk('public')->exists($employee->photo)) {
-        $photoUrl = asset('storage/'.$employee->photo);
+    if (!empty($employee?->photo) && file_exists(public_path('uploads/'.$employee->photo))) {
+        $photoUrl = asset('uploads/'.$employee->photo);
     } else {
         $photoUrl = 'https://ui-avatars.com/api/?name='.urlencode($user->name ?? 'Karyawan').'&background=0d6efd&color=fff&size=120';
     }
@@ -29,21 +29,19 @@
 <div class="card card-rounded p-4 text-center mb-3">
     <div class="position-relative d-inline-block">
         <img id="avatarPreview" src="{{ $photoUrl }}" class="rounded-circle mx-auto mb-2" width="100" height="100" style="object-fit:cover; border:3px solid #0d6efd;">
-        <label for="photoInput" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px; cursor:pointer; border:2px solid #fff;"><i class="bi bi-camera-fill small"></i></label>
+        <label for="photoBottom" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px; cursor:pointer; border:2px solid #fff;"><i class="bi bi-camera-fill small"></i></label>
     </div>
     <h5 class="mb-0">{{ $user->name }}</h5>
-    <small class="text-muted">{{ $user->nik ?? '-' }} • {{ $employee->employee_code ?? '-' }}</small>
+    <small class="text-muted">NIK: {{ $user->nik ?? '-' }}</small>
     <div class="mt-2">
-        <span class="badge bg-primary">{{ $user->role }}</span>
+        <span class="badge bg-primary">{{ $user->display_role }}</span>
         @if($employee)<span class="badge bg-secondary">{{ ucfirst($employee->employment_status ?? '-') }}</span>@endif
     </div>
-
-    {{-- Form Avatar --}}
-    <form id="avatarForm" action="{{ route('employee.profile.avatar') }}" method="POST" enctype="multipart/form-data" class="mt-3">
+    <small class="d-block text-muted mt-2" style="font-size:11px;">Klik icon kamera → pilih foto → klik <b>Simpan Perubahan</b> di bawah</small>
+    {{-- Form avatar terpisah tetap ada untuk kompatibilitas, tapi hidden --}}
+    <form id="avatarForm" action="{{ route('employee.profile.avatar') }}" method="POST" enctype="multipart/form-data" class="d-none">
         @csrf
-        <input type="file" name="photo" id="photoInput" accept="image/jpeg,image/png,image/jpg,image/webp" class="d-none" onchange="previewAvatar(this); document.getElementById('btnUploadAvatar').classList.remove('d-none');">
-        <button id="btnUploadAvatar" type="submit" class="btn btn-sm btn-primary d-none"><i class="bi bi-upload me-1"></i> Upload Avatar</button>
-        <small class="d-block text-muted mt-1" style="font-size:11px;">JPG/PNG max 2MB • klik icon kamera</small>
+        <input type="file" name="photo" id="photoInput" accept="image/jpeg,image/png,image/jpg,image/webp" class="d-none" onchange="previewAvatar(this);">
     </form>
 </div>
 
@@ -62,12 +60,12 @@
         @endif
     </div>
     <div class="small">
-        <div class="d-flex justify-content-between"><span class="text-muted">Departemen</span><span class="fw-semibold">{{ $employee->department->name ?? '-' }}</span></div>
-        <div class="d-flex justify-content-between"><span class="text-muted">Jabatan</span><span class="fw-semibold">{{ $employee->position->name ?? '-' }}</span></div>
-        <div class="d-flex justify-content-between"><span class="text-muted">Shift</span><span class="fw-semibold">{{ $employee->shift->name ?? '-' }} {{ $employee->shift ? '('.$employee->shift->start_time.'-'.$employee->shift->end_time.')' : '' }}</span></div>
-        <div class="d-flex justify-content-between"><span class="text-muted">Tgl Masuk</span><span>{{ $employee->join_date?->format('d M Y') ?? '-' }}</span></div>
-        <div class="d-flex justify-content-between"><span class="text-muted">Akhir Kontrak</span><span>{{ $employee->contract_end_date?->format('d M Y') ?? '-' }}</span></div>
-        <div class="d-flex justify-content-between"><span class="text-muted">Lokasi Kantor</span><span>{{ $employee->officeLocation->name ?? '-' }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Departemen</span><span class="fw-semibold">{{ $employee?->department?->name ?? '-' }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Jabatan</span><span class="fw-semibold">{{ $employee?->position?->name ?? '-' }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Shift</span><span class="fw-semibold">{{ $employee?->shift?->name ?? '-' }} {{ $employee?->shift ? '('.$employee->shift->start_time.'-'.$employee->shift->end_time.')' : '' }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Tgl Masuk</span><span>{{ $employee?->join_date?->format('d M Y') ?? '-' }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Akhir Kontrak</span><span>{{ $employee?->contract_end_date?->format('d M Y') ?? '-' }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Lokasi Kantor</span><span>{{ $employee?->officeLocation?->name ?? '-' }}</span></div>
     </div>
     @if(isset($contractProgress))
     <div class="progress mt-2" style="height:8px;"><div class="progress-bar bg-primary" style="width: {{ $contractProgress }}%"></div></div>
@@ -127,8 +125,8 @@
         </div>
         <div class="mb-3">
             <label class="form-label small mb-1">Ganti Avatar (opsional)</label>
-            <input type="file" name="photo" class="form-control form-control-sm" accept="image/*">
-            <small class="text-muted" style="font-size:11px;">Bisa juga upload via tombol kamera di atas</small>
+            <input type="file" name="photo" id="photoBottom" class="form-control form-control-sm" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewAvatar(this)">
+            <small class="text-muted" style="font-size:11px;">Bisa via icon kamera di atas atau input ini → lalu klik Simpan Perubahan</small>
         </div>
         <button type="submit" class="btn btn-primary w-100 btn-sm"><i class="bi bi-check-lg me-1"></i> Simpan Perubahan</button>
     </form>
