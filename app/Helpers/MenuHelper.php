@@ -12,10 +12,6 @@ class MenuHelper
         $user = auth()->user();
         if (!$user) return false;
         $role = $user->role ?? 'staff';
-<<<<<<< HEAD
-=======
-        // HRD bypass? tetap cek setting agar bisa dimatikan via setting
->>>>>>> 03b750586559a20aacd64af62893c95988533e04
         return MenuSetting::canAccess($role, $menuKey);
     }
 

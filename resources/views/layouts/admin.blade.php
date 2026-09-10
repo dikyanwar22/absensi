@@ -90,11 +90,8 @@
                     @if($can('live_map'))<li class="nav-item"><a href="/admin/attendances/live-map" class="nav-link {{ request()->is('admin/attendances/live-map*') ? 'active' : '' }}"><i class="nav-icon fas fa-map"></i><p>Live Map Hari Ini</p></a></li>@endif
                     @if($can('leaves')||$can('payrolls')||$can('reports')||$can('admin_profile'))<li class="nav-header">CUTI & PAYROLL</li>@endif
                     @if($can('leaves'))<li class="nav-item"><a href="/admin/leaves" class="nav-link {{ request()->is('admin/leaves*') ? 'active' : '' }}"><i class="nav-icon fas fa-envelope"></i><p>Pengajuan Cuti</p></a></li>@endif
-<<<<<<< HEAD
                     @if($can('payrolls'))<li class="nav-item"><a href="/admin/company-settings" class="nav-link {{ request()->is('admin/company-settings*') ? 'active' : '' }}"><i class="nav-icon fas fa-building"></i><p>Perusahaan (Logo)</p></a></li>@endif
                     @if($can('payrolls'))<li class="nav-item"><a href="/admin/deduction-types" class="nav-link {{ request()->is('admin/deduction-types*') ? 'active' : '' }}"><i class="nav-icon fas fa-minus-circle"></i><p>Master Potongan</p></a></li>@endif
-=======
->>>>>>> 03b750586559a20aacd64af62893c95988533e04
                     @if($can('payrolls'))<li class="nav-item"><a href="/admin/payrolls" class="nav-link {{ request()->is('admin/payrolls*') || request()->is('admin/payroll-detail*') ? 'active' : '' }}"><i class="nav-icon fas fa-money-bill"></i><p>Periode Gaji</p></a></li>@endif
                     @if($can('reports'))<li class="nav-item"><a href="/admin/reports" class="nav-link {{ request()->is('admin/reports*') ? 'active' : '' }}"><i class="nav-icon fas fa-file-excel"></i><p>Laporan & Export</p></a></li>@endif
 
